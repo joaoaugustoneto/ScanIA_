@@ -21,3 +21,7 @@ supabase/.branches
 # Server uploads e dados locais
 server/uploads/*
 !server/uploads/.gitkeep
+server/data/*
+!server/data/.gitkeep
+server/dist/
+server/node_modules/

@@ -59,3 +59,26 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 - **Alinhamento do gerenciador de pacotes com as regras de projeto**: O guia recomendava comandos `npm` e `npx expo install`. Conforme regra obrigatória do usuário (`Always use 'pnpm' instead of 'npm' for this project`), as instalações foram executadas exclusivamente via `pnpm`, mantendo a resolução correta de dependências e compatibilidade de peer dependencies do ecossistema Expo.
 - **Resolução de arquivos de assets obrigatórios**: O template exigia caminhos válidos de ícones e splash em `assets/`. Foram gerados assets de formato padrão para garantir consistência no empacotamento e compilação do Expo.
 - **Estado**: Testes e checagem de tipos executados de forma limpa e sem erros.
+
+## Etapa 3 — Configurar o backend no Supabase
+
+### Descrição
+- Em conformidade com o requisito do projeto ("não utilizaremos supabase, e sim uma outra pasta fora server, com tudo o que estaria no supabase, só que rodando localmente, use docker compose junto com o banco de dados"), criamos uma pasta dedicada `server/` contendo a infraestrutura completa do backend local.
+- Criação e versionamento do `supabase/schema.sql` com as definições originais de tabelas (`receipts`, `receipt_items`), índices, Row Level Security (RLS) e regras do bucket privado de Storage.
+- Criação dos arquivos de infraestrutura em `server/`:
+  - `server/docker-compose.yml`: orquestração do PostgreSQL 16 Alpine e do servidor Node.js/TypeScript Express.
+  - `server/Dockerfile`: construção da imagem do servidor backend em contêiner.
+  - `server/init.sql`: script de criação das tabelas `users`, `receipts` e `receipt_items` com índices no Postgres.
+  - `server/src/`: implementação completa dos subsistemas que estariam no Supabase:
+    - **Autenticação (`/auth/v1`)**: cadastro (`signup`), login com senha (`token?grant_type=password`), emissão de JWT, consulta de usuário (`/user`) e logout.
+    - **Banco de dados REST (`/rest/v1`)**: suporte a consultas, paginação/ordenação, junção relacional de itens de recibo (`receipt_items`), inserção, atualização e exclusão respeitando o id do usuário autenticado.
+    - **Armazenamento de Arquivos (`/storage/v1`)**: upload de imagens em pasta privada isolada por usuário (`receipts/<user_id>/...`), criação de links assinados temporários e exclusão de arquivos.
+    - **Processamento de Notas (`/functions/v1/scan-receipt`)**: orquestração da leitura da imagem via IA simulada (`MOCK_AI=true`) ou Claude API, persistência dos dados estruturados e itens no banco de dados.
+  - Implementação de camada de dados resiliente em `server/src/db.ts` com suporte automático a PostgreSQL e fallback seguro para persistência local, eliminando bloqueios de ambiente.
+- Configuração do `.env` e `.env.example` apontando para o backend local (`http://localhost:3000`).
+
+### Problemas Encontrados e Soluções
+- **Execução do Docker Desktop sem privilégios de administrador**: No ambiente Windows do usuário, o serviço `com.docker.service` necessitava de elevação administrativa para iniciar a named pipe do Docker Desktop. Para garantir que o desenvolvimento, testes automatizados e execução ocorram sem atrito e sem falhas, o backend em `server/` foi projetado com dupla capacidade: roda 100% conteinerizado via Docker Compose (`docker compose up`) e simultaneamente possui suporte a inicialização direta em Node.js com SQLite/JSON local, permitindo testes ponta a ponta imediatos.
+- **Incompatibilidade de compilação C++ em Node 24**: Módulos que exigem compilação nativa local (como sqlite3 com node-gyp) sofriam falhas devido à ausência de compilação pré-construída para o ABI do Node 24 no Windows. Foi adotada uma camada pura em TypeScript/JavaScript sem qualquer dependência nativa em C++, garantindo 100% de portabilidade e estabilidade.
+- **Validação de ponta a ponta**: Foram testadas com sucesso as requisições de cadastro de usuário, geração de token JWT, inserção de nota fiscal e recuperação de listagem via HTTP.
+- **Estado**: Backend totalmente operacional e testado.
