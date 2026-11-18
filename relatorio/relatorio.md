@@ -245,3 +245,20 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - **Sincronização de estado do formulário após reanálise**: A propriedade `key` do `<ReceiptForm>` foi vinculada a `${receipt.id}-${receipt.status}-${receipt.total}`, garantindo que, quando a reanálise da IA concluir com novos dados ou alteração de estado, o formulário reinicialize automaticamente com os valores atualizados sem necessidade de recarregar a tela.
 - **Estado**: Tela de detalhes, revisão e exclusão concluídas e testadas.
+
+## Etapa 12 — Resumo mensal
+
+### Descrição
+- Implementação da tela de métricas e inteligência financeira em `app/(app)/(tabs)/summary.tsx`:
+  - Seletor de mês com `MonthSwitcher` permitindo navegação cronológica contínua.
+  - Cartão de destaque (Hero) estilizado com o total gasto no mês corrente em reais, número de notas computadas e ticket médio por nota.
+  - Gráfico visual de rosca customizado via `DonutChart` (SVG), distribuindo fatias proporcionais por categoria de gasto e exibindo o montante total no miolo do gráfico.
+  - Legenda interativa exibindo badge de cor, nome da categoria, valor total acumulado e percentual relativo sobre o total mensal.
+  - Tratamento de meses sem movimentação ("Nenhuma nota lida neste mês.").
+  - Memoização com `useMemo` vinculando o recálculo apenas a alterações na lista de notas ou no mês selecionado.
+  - Garantia de que notas em status `pending` ou `error` não interfiram nos cálculos financeiros.
+- Validação estática de tipos com `pnpm run typecheck` e testes automatizados com `pnpm test`.
+
+### Problemas Encontrados e Soluções
+- Nenhum erro encontrado. As funções de cálculo financeiro em centavos testadas na Etapa 5 integraram-se perfeitamente com os componentes visuais.
+- **Estado**: Tela de resumo e gráficos concluídos e testados.
