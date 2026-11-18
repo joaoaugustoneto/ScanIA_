@@ -146,3 +146,23 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - **Tipagem de erro personalizada no Zod enum**: Ao definir `z.enum(CATEGORY_NAMES, ...)` no schema de notas, garantiu-se o mapa de erro customizado com `errorMap` para manter consistência com a versão instalada do Zod, mantendo 100% de compatibilidade na compilação do TypeScript.
 - **Estado**: Testes e typecheck executados sem erros.
+
+## Etapa 7 — Design system: componentes de interface
+
+### Descrição
+- Implementação dos componentes modulares do Design System:
+  - `src/components/Button.tsx`: botão customizado com 4 variantes (`primary`, `secondary`, `danger`, `ghost`), estado de loading e desabilitação acessível.
+  - `src/components/Input.tsx`: campo de texto estilizado com suporte a mensagens de erro inline.
+  - `src/components/FormInput.tsx`: integração do campo de texto com `react-hook-form` via `<Controller>` e suporte a máscara em tempo real.
+  - `src/components/Card.tsx`: contêiner com sombra suave, raio consistente e fundo de superfície.
+  - `src/components/Screen.tsx`: encapsulamento de telas com `SafeAreaView` e tratamento automático de teclado e rolagem com `KeyboardAvoidingView` e `ScrollView`.
+  - `src/components/StateViews.tsx`: componentes padronizados para estados assíncronos (`LoadingView`, `ErrorState` com ação de retry e `EmptyState` com ícones).
+  - `src/components/MonthSwitcher.tsx`: navegação rápida entre meses com botões de chevron e rótulo amigável em português.
+  - `src/components/DonutChart.tsx`: gráfico de rosca vetorial desenhado com arcos matemáticos no `react-native-svg` (sem dependência de bibliotecas de terceiros) e área central customizável.
+  - `src/components/StatusBadge.tsx`: indicador de status da nota (`Processando`, `Lida`, `Falhou`) com paleta contextual.
+  - `src/components/ReceiptCard.tsx`: cartão interativo de nota exibindo ícone temático translúcido, nome do estabelecimento, data, status e valor formatado em reais.
+- Validação estática de tipos com `pnpm run typecheck` e verificação da suíte de testes com `pnpm test`.
+
+### Problemas Encontrados e Soluções
+- Nenhum problema de compatibilidade ou tipagem encontrado. Os componentes aderiram rigorosamente aos design tokens e tipagens TypeScript estritas.
+- **Estado**: Componentes criados e testados com sucesso.
