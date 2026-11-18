@@ -82,3 +82,18 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 - **Incompatibilidade de compilação C++ em Node 24**: Módulos que exigem compilação nativa local (como sqlite3 com node-gyp) sofriam falhas devido à ausência de compilação pré-construída para o ABI do Node 24 no Windows. Foi adotada uma camada pura em TypeScript/JavaScript sem qualquer dependência nativa em C++, garantindo 100% de portabilidade e estabilidade.
 - **Validação de ponta a ponta**: Foram testadas com sucesso as requisições de cadastro de usuário, geração de token JWT, inserção de nota fiscal e recuperação de listagem via HTTP.
 - **Estado**: Backend totalmente operacional e testado.
+
+## Etapa 4 — Fundações: tipos, categorias, tema e conexão
+
+### Descrição
+- Criação dos tipos de domínio em `src/types/index.ts` (`ReceiptStatus`, `ReceiptItem`, `Receipt`, `ReceiptUpdate`).
+- Definição da lista centralizada de categorias com cores e ícones do Ionicons em `src/constants/categories.ts`, com tipagem literal estrita via `as const satisfies` e fallback resiliente em `categoryInfo()`.
+- Implementação dos tokens de design em `src/theme/index.ts` (paleta de cores índigo, espaçamentos, raios e sombras).
+- Configuração do cliente do Supabase em `src/lib/supabase.ts` integrado ao `AsyncStorage` com renovação de sessão vinculada ao `AppState` do dispositivo.
+- Configuração do `QueryClient` em `src/lib/queryClient.ts` com configurações de retry e tempo de expiração (`staleTime`).
+- Implementação de utilitários de erros traduzidos para português em `src/utils/errors.ts` e resolução segura de ícones em `src/utils/icons.ts`.
+- Validação estática de tipos com `pnpm run typecheck`.
+
+### Problemas Encontrados e Soluções
+- **Estruturação de tipos de ambiente**: O cliente do Supabase lê variáveis `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_KEY` do ambiente. Como já havíamos configurado `expo-env.d.ts` e `.env` adequadamente, a verificação com o compilador TypeScript ocorreu de forma limpa e sem erros de propriedades globais.
+- **Estado**: Testes e checagem de tipos concluídos com sucesso.
