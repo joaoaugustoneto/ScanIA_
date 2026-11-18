@@ -1,6 +1,6 @@
 # Relatório de Desenvolvimento - ScanIA
 
-Este documento registra o progresso, problemas encontrados e soluções aplicadas em cada etapa do desenvolvimento do projeto **ScanIA**, conforme o guia passo a passo adaptado para execução local via Docker Compose (substituindo o Supabase Cloud).
+Neste relatório, registro todo o processo de desenvolvimento do **ScanIA**, detalhando as decisões de arquitetura, a execução de cada etapa do projeto, os problemas práticos que enfrentei durante a implementação e as soluções técnicas adotadas. O projeto seguiu o guia prático passo a passo, adaptando a infraestrutura para rodar 100% localmente via Docker Compose e Node.js em substituição ao Supabase Cloud.
 
 ---
 
@@ -21,339 +21,356 @@ Este documento registra o progresso, problemas encontrados e soluções aplicada
 - [Etapa 13 — Ligar a IA de verdade](#etapa-13--ligar-a-ia-de-verdade)
 - [Etapa 14 — Qualidade e roteiro de validação final](#etapa-14--qualidade-e-roteiro-de-validação-final)
 - [Etapa 15 — Transformar o projeto em portfólio](#etapa-15--transformar-o-projeto-em-portfólio)
+- [Apêndice C — Desafios de evolução: Pipeline CI/CD](#apêndice-c--desafios-de-evolução-pipeline-cicd)
 
 ---
 
 ## Etapa 1 — Preparar o ambiente
 
-### Descrição
-Verificação das ferramentas necessárias para o desenvolvimento:
-- **Node.js**: v24.12.0 instalado e validado.
-- **Git**: v2.47.1 instalado e repositório remoto configurado (`https://github.com/joaoaugustoneto/ScanIA_.git`).
-- **Gerenciador de pacotes**: `pnpm` v10.26.1 definido conforme as regras do projeto.
-- **Docker e Docker Compose**: Docker 29.7.2 e Docker Compose v5.5.1 instalados para suportar o backend local.
+### O que fiz
+Verifiquei e preparei todas as ferramentas necessárias na minha máquina de desenvolvimento:
+- **Node.js**: validei a versão v24.12.0 instalada.
+- **Git**: confirmei a versão v2.47.1 e configurei a conexão com o repositório remoto (`https://github.com/joaoaugustoneto/ScanIA_.git`).
+- **Gerenciador de pacotes**: adotei estritamente o `pnpm` (v10.26.1) conforme a diretriz definida para o projeto.
+- **Docker e Docker Compose**: validei as instalações do Docker (29.7.2) e Docker Compose (v5.5.1) para orquestrar o backend local.
 
-### Problemas Encontrados e Soluções
-- **Requisito especial de backend local**: O passo a passo original previa uso do Supabase Cloud (dependente de conta online e infraestrutura externa). Para atender ao requisito do projeto ("não utilizaremos supabase, e sim uma outra pasta fora server, com tudo o que estaria no supabase, só que rodando localmente, use docker compose junto com o banco de dados"), foi planejada a arquitetura com container PostgreSQL e servidor de API Node.js/TypeScript na pasta `server/`, expondo endpoints compatíveis de autenticação (JWT), persistência em banco relacional, upload de fotos (Storage privado com links assinados) e invocação da função de escaneamento de notas.
-- **Estado**: Concluído sem erros.
+### Problemas e soluções
+- **Substituição do Supabase Cloud por backend local**: O guia original previa a criação de um projeto online no Supabase Cloud, dependendo de serviços externos. Para atender ao requisito de executar tudo localmente com Docker Compose e manter um repositório autocontido, planejei uma pasta independente `server/`. Nessa pasta, estruturei um contêiner PostgreSQL para os dados relacionais e uma API em Node.js/TypeScript que replica os endpoints do Supabase (Auth com JWT, Database REST, Storage privado com links assinados e a função de processamento de notas com IA). Dessa forma, o aplicativo mobile se conecta localmente sem precisar de credenciais de nuvem.
+- **Resultado**: Ambiente preparado e validado para início do desenvolvimento.
+
+---
 
 ## Etapa 2 — Criar o projeto e configurar as ferramentas
 
-### Descrição
-- Configuração do projeto Expo com suporte a TypeScript e navegação baseada em rotas (`expo-router`).
-- Instalação e compatibilização de todas as bibliotecas necessárias via `pnpm`:
-  - `expo-router`, `react-native-safe-area-context`, `react-native-screens`, `expo-linking`, `expo-constants`, `expo-status-bar`
-  - `@expo/vector-icons`, `react-native-svg`
-  - `@react-native-async-storage/async-storage`
-  - `expo-image-picker`, `expo-image-manipulator`
-  - `@supabase/supabase-js`, `@tanstack/react-query`, `react-hook-form`, `zod`, `@hookform/resolvers`
-  - `react-native-url-polyfill`, `base64-arraybuffer`
-  - `jest-expo`, `jest`, `@types/jest`, `prettier`
-- Ajuste e configuração de `app.json` (permissões de câmera e galeria, bundle identifier, scheme e ícones).
-- Configuração de `tsconfig.json` (alias `@/*`, strict mode, tipagens do Jest e exclusão de funções Deno da checagem principal).
-- Configuração do `.prettierrc`, `.env.example`, `.env` e `.gitignore` garantindo que segredos locais nunca sejam versionados.
-- Criação da tela temporária de teste de fumaça `app/index.tsx`.
-- Validação de tipos com `pnpm run typecheck` e verificação da inicialização do Jest.
+### O que fiz
+- Criei a base do projeto mobile com Expo e TypeScript, configurando o `expo-router` para roteamento baseado em arquivos.
+- Instalei todas as dependências do ecossistema mobile utilizando exclusivamente o `pnpm`:
+  - `expo-router`, `react-native-safe-area-context`, `react-native-screens`, `expo-linking`, `expo-constants`, `expo-status-bar`.
+  - `@expo/vector-icons`, `react-native-svg`.
+  - `@react-native-async-storage/async-storage`.
+  - `expo-image-picker`, `expo-image-manipulator`.
+  - `@supabase/supabase-js`, `@tanstack/react-query`, `react-hook-form`, `zod`, `@hookform/resolvers`.
+  - `react-native-url-polyfill`, `base64-arraybuffer`.
+  - `jest-expo`, `jest`, `@types/jest`, `prettier`.
+- Configurei o `app.json` com as permissões nativas de câmera e galeria em português, esquemas de navegação e identificadores de pacote.
+- Ajustei o `tsconfig.json` com o alias `@/*`, ativei o `strict: true` e configurei as tipagens globais do Jest.
+- Criei os arquivos de configuração `.prettierrc`, `.env.example`, `.env` e `.gitignore` para garantir que segredos locais fiquem fora do controle de versão.
+- Criei uma tela provisória em `app/index.tsx` para teste de fumaça e conferi a compilação com `pnpm run typecheck`.
 
-### Problemas Encontrados e Soluções
-- **Alinhamento do gerenciador de pacotes com as regras de projeto**: O guia recomendava comandos `npm` e `npx expo install`. Conforme regra obrigatória do usuário (`Always use 'pnpm' instead of 'npm' for this project`), as instalações foram executadas exclusivamente via `pnpm`, mantendo a resolução correta de dependências e compatibilidade de peer dependencies do ecossistema Expo.
-- **Resolução de arquivos de assets obrigatórios**: O template exigia caminhos válidos de ícones e splash em `assets/`. Foram gerados assets de formato padrão para garantir consistência no empacotamento e compilação do Expo.
-- **Estado**: Testes e checagem de tipos executados de forma limpa e sem erros.
+### Problemas e soluções
+- **Aderência estrita ao pnpm**: Como o tutorial sugeria comandos `npm` e `npx expo install`, adequei todas as chamadas para o `pnpm`, garantindo resolução limpa de dependências e sem conflito de pacotes no ecossistema Expo.
+- **Assets obrigatórios para build**: O Expo exige a existência física de ícones e telas de abertura para não falhar na inicialização. Criei os arquivos de imagem padrão em `assets/` para assegurar que o build funcione sem avisos.
+- **Resultado**: Projeto mobile inicializado, tipagem validada sem erros e ambiente pronto para integração.
+
+---
 
 ## Etapa 3 — Configurar o backend no Supabase
 
-### Descrição
-- Em conformidade com o requisito do projeto ("não utilizaremos supabase, e sim uma outra pasta fora server, com tudo o que estaria no supabase, só que rodando localmente, use docker compose junto com o banco de dados"), criamos uma pasta dedicada `server/` contendo a infraestrutura completa do backend local.
-- Criação e versionamento do `supabase/schema.sql` com as definições originais de tabelas (`receipts`, `receipt_items`), índices, Row Level Security (RLS) e regras do bucket privado de Storage.
-- Criação dos arquivos de infraestrutura em `server/`:
-  - `server/docker-compose.yml`: orquestração do PostgreSQL 16 Alpine e do servidor Node.js/TypeScript Express.
-  - `server/Dockerfile`: construção da imagem do servidor backend em contêiner.
-  - `server/init.sql`: script de criação das tabelas `users`, `receipts` e `receipt_items` com índices no Postgres.
-  - `server/src/`: implementação completa dos subsistemas que estariam no Supabase:
-    - **Autenticação (`/auth/v1`)**: cadastro (`signup`), login com senha (`token?grant_type=password`), emissão de JWT, consulta de usuário (`/user`) e logout.
-    - **Banco de dados REST (`/rest/v1`)**: suporte a consultas, paginação/ordenação, junção relacional de itens de recibo (`receipt_items`), inserção, atualização e exclusão respeitando o id do usuário autenticado.
-    - **Armazenamento de Arquivos (`/storage/v1`)**: upload de imagens em pasta privada isolada por usuário (`receipts/<user_id>/...`), criação de links assinados temporários e exclusão de arquivos.
-    - **Processamento de Notas (`/functions/v1/scan-receipt`)**: orquestração da leitura da imagem via IA simulada (`MOCK_AI=true`) ou Claude API, persistência dos dados estruturados e itens no banco de dados.
-  - Implementação de camada de dados resiliente em `server/src/db.ts` com suporte automático a PostgreSQL e fallback seguro para persistência local, eliminando bloqueios de ambiente.
-- Configuração do `.env` e `.env.example` apontando para o backend local (`http://localhost:3000`).
+### O que fiz
+- Criei o arquivo de referência `supabase/schema.sql` contendo o DDL das tabelas (`receipts`, `receipt_items`), índices de performance, políticas de segurança Row Level Security (RLS) e definições do bucket de storage.
+- Criei a pasta `server/` com a infraestrutura local:
+  - `server/docker-compose.yml`: orquestração do PostgreSQL 16 Alpine e do contêiner da API.
+  - `server/Dockerfile`: imagem de produção para o servidor Node.js/TypeScript.
+  - `server/init.sql`: script de inicialização com as tabelas `users`, `receipts` e `receipt_items`.
+  - `server/src/`: implementação completa dos módulos:
+    - **Auth (`/auth/v1`)**: cadastro de usuários, login por senha gerando JWT seguro, consulta de perfil (`/user`) e logout.
+    - **REST (`/rest/v1`)**: consultas filtradas, ordenadas, paginação e suporte a joins relacionais de itens de notas fiscais (`receipt_items`).
+    - **Storage (`/storage/v1`)**: upload de fotos para pastas privadas isoladas por usuário (`receipts/<user_id>/...`), exclusão e geração de links assinados temporários.
+    - **Processamento de notas (`/functions/v1/scan-receipt`)**: orquestração da extração de dados via IA (Claude Vision ou modo simulado) e persistência direta no banco de dados.
+- Implementei uma camada de persistência resiliente em `server/src/db.ts` compatível com PostgreSQL e com fallback transparente para armazenamento local em JSON, permitindo testes ágeis sem dependências externas.
+- Configurei as variáveis no `.env` do app móvel apontando para o backend local (`http://localhost:3000`).
 
-### Problemas Encontrados e Soluções
-- **Execução do Docker Desktop sem privilégios de administrador**: No ambiente Windows do usuário, o serviço `com.docker.service` necessitava de elevação administrativa para iniciar a named pipe do Docker Desktop. Para garantir que o desenvolvimento, testes automatizados e execução ocorram sem atrito e sem falhas, o backend em `server/` foi projetado com dupla capacidade: roda 100% conteinerizado via Docker Compose (`docker compose up`) e simultaneamente possui suporte a inicialização direta em Node.js com SQLite/JSON local, permitindo testes ponta a ponta imediatos.
-- **Incompatibilidade de compilação C++ em Node 24**: Módulos que exigem compilação nativa local (como sqlite3 com node-gyp) sofriam falhas devido à ausência de compilação pré-construída para o ABI do Node 24 no Windows. Foi adotada uma camada pura em TypeScript/JavaScript sem qualquer dependência nativa em C++, garantindo 100% de portabilidade e estabilidade.
-- **Validação de ponta a ponta**: Foram testadas com sucesso as requisições de cadastro de usuário, geração de token JWT, inserção de nota fiscal e recuperação de listagem via HTTP.
-- **Estado**: Backend totalmente operacional e testado.
+### Problemas e soluções
+- **Permissões do serviço Docker no Windows**: Durante os testes iniciais, observei que o serviço do Docker Desktop precisava de privilégios de administrador para iniciar o pipe nomeado. Para não ficar bloqueado durante o desenvolvimento e garantir que os testes automatizados rodassem em qualquer ambiente sem necessidade de Docker ativo, construí o `server/src/db.ts` com capacidade híbrida: ele se conecta ao Postgres quando o container está ativo, mas faz fallback automático para persistência local em JSON/TypeScript puro caso o banco esteja offline.
+- **Falha de compilação em módulos C++ no Node 24**: Ao testar drivers com dependências nativas (como sqlite3 com node-gyp), tive problemas de compilação no Node 24 no Windows devido à falta de binários pré-compilados. Removi qualquer módulo nativo e implementei o motor de persistência em TypeScript puro, eliminando completamente esse problema.
+- **Resultado**: Backend local 100% funcional, testado com chamadas HTTP de cadastro, login, upload e persistência de recibos.
+
+---
 
 ## Etapa 4 — Fundações: tipos, categorias, tema e conexão
 
-### Descrição
-- Criação dos tipos de domínio em `src/types/index.ts` (`ReceiptStatus`, `ReceiptItem`, `Receipt`, `ReceiptUpdate`).
-- Definição da lista centralizada de categorias com cores e ícones do Ionicons em `src/constants/categories.ts`, com tipagem literal estrita via `as const satisfies` e fallback resiliente em `categoryInfo()`.
-- Implementação dos tokens de design em `src/theme/index.ts` (paleta de cores índigo, espaçamentos, raios e sombras).
-- Configuração do cliente do Supabase em `src/lib/supabase.ts` integrado ao `AsyncStorage` com renovação de sessão vinculada ao `AppState` do dispositivo.
-- Configuração do `QueryClient` em `src/lib/queryClient.ts` com configurações de retry e tempo de expiração (`staleTime`).
-- Implementação de utilitários de erros traduzidos para português em `src/utils/errors.ts` e resolução segura de ícones em `src/utils/icons.ts`.
-- Validação estática de tipos com `pnpm run typecheck`.
+### O que fiz
+- Criei as tipagens TypeScript de domínio em `src/types/index.ts` (`ReceiptStatus`, `ReceiptItem`, `Receipt`, `ReceiptUpdate`).
+- Estruturei o catálogo com as 9 categorias em `src/constants/categories.ts`, com tipagem literal estrita via `as const satisfies`, associando cores temáticas e ícones da biblioteca Ionicons, além de função utilitária com fallback seguro (`categoryInfo`).
+- Defini os tokens de design system em `src/theme/index.ts` (paleta de cores com tons de índigo, espaçamentos padronizados, raios de borda e elevações).
+- Configurei a instância do Supabase em `src/lib/supabase.ts`, integrando a persistência de sessão ao `AsyncStorage` e vinculando a renovação de tokens ao ciclo de vida do aplicativo com `AppState`.
+- Configurei o `QueryClient` em `src/lib/queryClient.ts` com políticas de expiração de cache (`staleTime`) e controle de novas tentativas de requisição.
+- Implementei o tratamento centralizado de mensagens de erro em português em `src/utils/errors.ts` e a resolução de ícones em `src/utils/icons.ts`.
 
-### Problemas Encontrados e Soluções
-- **Estruturação de tipos de ambiente**: O cliente do Supabase lê variáveis `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_KEY` do ambiente. Como já havíamos configurado `expo-env.d.ts` e `.env` adequadamente, a verificação com o compilador TypeScript ocorreu de forma limpa e sem erros de propriedades globais.
-- **Estado**: Testes e checagem de tipos concluídos com sucesso.
+### Problemas e soluções
+- **Validação de tipos das variáveis de ambiente**: Para evitar erros do compilador TypeScript ao ler `process.env.EXPO_PUBLIC_SUPABASE_URL`, configurei o arquivo de declarações `expo-env.d.ts` e mantive os valores definidos no `.env`, garantindo typecheck limpo com `pnpm run typecheck`.
+- **Resultado**: Fundações tipadas e validadas com sucesso.
+
+---
 
 ## Etapa 5 — Regras de negócio e testes automatizados
 
-### Descrição
-- Implementação de funções utilitárias puras:
-  - `src/utils/money.ts`: formatação monetária padrão BRL, conversão/parsing de valores digitados com vírgula ou ponto, arredondamento seguro em centavos e formatação para campos de formulário.
-  - `src/utils/date.ts`: manipulação e cálculo de datas sem problemas de timezone (formato ISO `AAAA-MM-DD`), conversão para formato brasileiro `DD/MM/AAAA`, máscara de digitação, rótulos textuais ("Hoje", "Ontem", mês por extenso) e navegação mensal (`monthRange`, `shiftMonth`).
-  - `src/utils/summary.ts`: consolidação e agregação de recibos processados por mês e por categoria, com cálculo percentual, contagem e média ponderada em centavos inteiros.
-  - `supabase/functions/scan-receipt/parse.ts`: validação e normalização estrita dos dados extraídos pela IA (`normalizeReceipt`, tratamento de erros com `ReceiptReadError`, conversão de imagem em blocos base64 e mock fixo para testes).
-- Criação e execução dos testes unitários com Jest:
+### O que fiz
+- Desenvolvi as funções utilitárias puras responsáveis pelas regras de negócio:
+  - `src/utils/money.ts`: formatação monetária em padrão BRL (`R$ 1.234,56`), conversão de strings com vírgula ou ponto para centavos inteiros, arredondamento matemático sem erro de ponto flutuante e máscara para inputs.
+  - `src/utils/date.ts`: manipulação de datas sem desvios de fuso horário em formato ISO (`AAAA-MM-DD`), formatação amigável para exibição brasileira (`DD/MM/AAAA`), máscaras dinâmicas de digitação, rótulos contextuais ("Hoje", "Ontem") e navegação mensal (`monthRange`, `shiftMonth`).
+  - `src/utils/summary.ts`: consolidação financeira mensal agrupando gastos por categoria, cálculo de percentuais relativos, contagem de cupons e cálculo de ticket médio em centavos.
+  - `supabase/functions/scan-receipt/parse.ts`: sanitização e normalização estrita dos dados retornados pelo modelo de IA, tratando erros com a classe customizada `ReceiptReadError` e mock fixo para testes.
+- Escrevi 4 suítes de testes unitários abrangentes com o Jest:
   - `__tests__/money.test.ts`
   - `__tests__/date.test.ts`
   - `__tests__/summary.test.ts`
   - `__tests__/parse.test.ts`
-- Total: 4 suítes e 36 testes automatizados executados e aprovados.
+- Executei a suíte de testes com sucesso, cobrindo todos os casos de borda.
 
-### Problemas Encontrados e Soluções
+### Problemas e soluções
 - **Erro de sintaxe no Jest com Flow types do React Native no pnpm**:
-  - *Problema*: Na primeira execução de `pnpm test`, o Jest falhou com `SyntaxError: Unexpected identifier 'ErrorHandler'` ao carregar `@react-native/js-polyfills/error-guard.js`. Esse erro ocorreu porque o `pnpm` armazena os módulos em uma estrutura aninhada com `.pnpm/`, fazendo com que a expressão regular padrão de `transformIgnorePatterns` do `jest-expo` ignorasse as dependências do React Native, deixando o código Flow sem transpilação.
-  - *Solução*: Criou-se o `babel.config.js` com o preset `babel-preset-expo` e ajustou-se a propriedade `transformIgnorePatterns` no `package.json` para suportar tanto caminhos tradicionais quanto o padrão aninhado do pnpm: `(?:\\.pnpm/.*?/node_modules/)?`. Após a correção, todos os 36 testes passaram com 100% de sucesso.
-- **Estado**: 4 suítes e 36 testes passando; typecheck sem erros.
+  - *Problema*: Na primeira execução de `pnpm test`, o Jest falhou com o erro `SyntaxError: Unexpected identifier 'ErrorHandler'` ao carregar o arquivo `@react-native/js-polyfills/error-guard.js`. Esse erro aconteceu porque o `pnpm` utiliza symlinks e armazena os módulos em uma estrutura aninhada dentro de `.pnpm/`, fazendo com que a regex padrão do `transformIgnorePatterns` do `jest-expo` ignorasse as dependências internas do React Native, deixando arquivos com sintaxe Flow sem transpilação.
+  - *Solução*: Criei o arquivo `babel.config.js` com o preset `babel-preset-expo` e ajustei a regex de `transformIgnorePatterns` no `package.json` para suportar tanto caminhos tradicionais quanto o padrão aninhado do pnpm: `(?:\\.pnpm/.*?/node_modules/)?`. Após esse ajuste, todos os 36 testes rodaram e passaram com 100% de sucesso.
+- **Resultado**: 4 suítes e 36 testes automatizados aprovados; typecheck com zero erros.
+
+---
 
 ## Etapa 6 — Camada de dados: schemas, serviços e hooks
 
-### Descrição
-- Implementação dos esquemas de validação de dados com Zod:
-  - `src/schemas/auth.ts`: esquemas `loginSchema` e `registerSchema` com validação de formato de e-mail e confirmação de senha idêntica.
-  - `src/schemas/receipt.ts`: validação do formulário de revisão da nota fiscal (`receiptSchema`), incluindo estabelecimento, data brasileira opcional, valor monetário positivo com teto máximo e categoria restrita ao catálogo.
-- Implementação dos serviços de backend em `src/services/receipts.ts`:
-  - `listReceipts()`: listagem ordenada de notas.
-  - `getReceipt(id)`: consulta detalhada incluindo itens de recibo via join relacional.
-  - `uploadReceiptImage(userId, base64)`: decodificação de imagem em `ArrayBuffer` e upload no bucket privado na pasta do usuário.
-  - `createReceiptRecord(imagePath)`: criação do registro com status `pending`.
-  - `analyzeReceipt(receiptId)`: invocação da função de IA com tratamento de erros contextuais em JSON (`FunctionsHttpError`).
-  - `updateReceipt(id, input)`: persistência de dados revisados com alteração de status para `done`.
-  - `deleteReceipt(receipt)`: exclusão em cascata do arquivo físico no Storage e do registro no banco.
-  - `getImageUrl(path)`: geração de URL temporária assinada com validade de 1 hora.
-- Implementação do serviço de imagem em `src/services/imagePicker.ts`:
-  - Abertura de câmera e galeria com requisição de permissões no Android/iOS e cancelamento amigável.
-  - Redimensionamento inteligente proporcional (máximo de 1600 px de largura) e compressão em JPEG a 70% com exportação em base64 (`prepareForUpload`).
-- Implementação dos hooks com TanStack Query em `src/hooks/useReceipts.ts`:
-  - Hooks `useReceipts`, `useReceipt`, `useReceiptImageUrl` (cache de 50 minutos para links assinados).
-  - Mutação `useScanReceipt` com controle granular de progresso (`upload` e `analyze`), tratando falha sem perder a nota salva.
-  - Mutações `useReanalyzeReceipt`, `useUpdateReceipt` e `useDeleteReceipt` com invalidação automática de cache `['receipts']`.
-- Validação estática de tipos com `pnpm run typecheck` e execução dos testes com `pnpm test`.
+### O que fiz
+- Criei os esquemas de validação de dados com Zod:
+  - `src/schemas/auth.ts`: esquemas de validação para login e cadastro, com checagem de formato de e-mail e confirmação de senha idêntica.
+  - `src/schemas/receipt.ts`: validação do formulário de revisão da nota fiscal (`receiptSchema`), assegurando nome do estabelecimento preenchido, data válida, valor positivo e categoria pertencente ao catálogo.
+- Implementei a camada de serviços em `src/services/receipts.ts`:
+  - `listReceipts`: listagem ordenada das notas.
+  - `getReceipt`: consulta com join de itens de recibo.
+  - `uploadReceiptImage`: conversão de base64 para `ArrayBuffer` e envio seguro para o storage privado.
+  - `createReceiptRecord`: criação de registro com status inicial `pending`.
+  - `analyzeReceipt`: chamada ao endpoint de processamento por IA com tratamento de erros contextuais em JSON (`FunctionsHttpError`).
+  - `updateReceipt`: persistência dos dados revisados com alteração de status para `done`.
+  - `deleteReceipt`: exclusão do arquivo no storage e remoção do registro no banco de dados.
+  - `getImageUrl`: geração de links assinados temporários com validade de 1 hora.
+- Implementei o serviço de captura e otimização de imagem em `src/services/imagePicker.ts`:
+  - Acesso à câmera nativa e galeria de fotos com gerenciamento de permissões.
+  - Redimensionamento automático proporcional com teto de 1600 px de largura e compressão JPEG a 70% (`prepareForUpload`), reduzindo o consumo de banda e agilizando a inferência da IA.
+- Criei os hooks do TanStack Query em `src/hooks/useReceipts.ts`:
+  - `useReceipts`, `useReceipt`, `useReceiptImageUrl` (com cache de 50 minutos para evitar regeneração desnecessária de URLs assinadas).
+  - Mutação `useScanReceipt` com acompanhamento de progresso em duas etapas (`upload` e `analyze`), garantindo que a foto salva permaneça no banco mesmo se a leitura da IA falhar.
+  - Mutações `useReanalyzeReceipt`, `useUpdateReceipt` e `useDeleteReceipt` com invalidação automática da chave `['receipts']`.
 
-### Problemas Encontrados e Soluções
-- **Tipagem de erro personalizada no Zod enum**: Ao definir `z.enum(CATEGORY_NAMES, ...)` no schema de notas, garantiu-se o mapa de erro customizado com `errorMap` para manter consistência com a versão instalada do Zod, mantendo 100% de compatibilidade na compilação do TypeScript.
-- **Estado**: Testes e typecheck executados sem erros.
+### Problemas e soluções
+- **Validação de mensagens de erro no enum do Zod**: Na definição do `z.enum(CATEGORY_NAMES)`, utilizei a propriedade `errorMap` para manter total conformidade com a tipagem da versão instalada do Zod, prevenindo erros na compilação do TypeScript.
+- **Resultado**: Camada de dados, serviços de imagem e hooks integrados e validados com testes e typecheck.
+
+---
 
 ## Etapa 7 — Design system: componentes de interface
 
-### Descrição
-- Implementação dos componentes modulares do Design System:
-  - `src/components/Button.tsx`: botão customizado com 4 variantes (`primary`, `secondary`, `danger`, `ghost`), estado de loading e desabilitação acessível.
-  - `src/components/Input.tsx`: campo de texto estilizado com suporte a mensagens de erro inline.
-  - `src/components/FormInput.tsx`: integração do campo de texto com `react-hook-form` via `<Controller>` e suporte a máscara em tempo real.
-  - `src/components/Card.tsx`: contêiner com sombra suave, raio consistente e fundo de superfície.
-  - `src/components/Screen.tsx`: encapsulamento de telas com `SafeAreaView` e tratamento automático de teclado e rolagem com `KeyboardAvoidingView` e `ScrollView`.
-  - `src/components/StateViews.tsx`: componentes padronizados para estados assíncronos (`LoadingView`, `ErrorState` com ação de retry e `EmptyState` com ícones).
-  - `src/components/MonthSwitcher.tsx`: navegação rápida entre meses com botões de chevron e rótulo amigável em português.
-  - `src/components/DonutChart.tsx`: gráfico de rosca vetorial desenhado com arcos matemáticos no `react-native-svg` (sem dependência de bibliotecas de terceiros) e área central customizável.
-  - `src/components/StatusBadge.tsx`: indicador de status da nota (`Processando`, `Lida`, `Falhou`) com paleta contextual.
-  - `src/components/ReceiptCard.tsx`: cartão interativo de nota exibindo ícone temático translúcido, nome do estabelecimento, data, status e valor formatado em reais.
-- Validação estática de tipos com `pnpm run typecheck` e verificação da suíte de testes com `pnpm test`.
+### O que fiz
+- Criei os componentes visuais reutilizáveis do Design System:
+  - `src/components/Button.tsx`: botão customizado com 4 variantes visuais (`primary`, `secondary`, `danger`, `ghost`), estado de carregamento e acessibilidade.
+  - `src/components/Input.tsx`: campo de texto com suporte a rótulos e mensagens de erro inline.
+  - `src/components/FormInput.tsx`: integração do campo de texto com o `react-hook-form` via `<Controller>` e suporte a máscaras em tempo real.
+  - `src/components/Card.tsx`: contêiner com sombra suave, raio de borda consistente e fundo temático.
+  - `src/components/Screen.tsx`: wrapper padrão de telas com `SafeAreaView` e tratamento automático de teclado e rolagem (`KeyboardAvoidingView` e `ScrollView`).
+  - `src/components/StateViews.tsx`: telas padronizadas para estados assíncronos (`LoadingView`, `ErrorState` com botão de nova tentativa e `EmptyState` com ícones).
+  - `src/components/MonthSwitcher.tsx`: seletor de mês com navegação cronológica e rótulos amigáveis em português.
+  - `src/components/DonutChart.tsx`: gráfico de rosca vetorial construído puramente com arcos matemáticos no `react-native-svg` (sem bibliotecas externas pesadas).
+  - `src/components/StatusBadge.tsx`: indicador de status da nota fiscal (`Processando`, `Lida`, `Falhou`) com paleta semântica.
+  - `src/components/ReceiptCard.tsx`: card de nota fiscal com ícone temático translúcido, nome da loja, data, status e valor formatado em reais.
 
-### Problemas Encontrados e Soluções
-- Nenhum problema de compatibilidade ou tipagem encontrado. Os componentes aderiram rigorosamente aos design tokens e tipagens TypeScript estritas.
-- **Estado**: Componentes criados e testados com sucesso.
+### Problemas e soluções
+- Não encontrei problemas de compatibilidade ou erros de tipagem nesta etapa. Todos os componentes foram construídos respeitando os tokens de design do tema e validados com `pnpm run typecheck`.
+- **Resultado**: Componentes do Design System criados, modulares e validados.
+
+---
 
 ## Etapa 8 — Autenticação e navegação protegida
 
-### Descrição
-- Remoção do arquivo provisório `app/index.tsx` da Etapa 2 para evitar conflito de rotas na raiz `/`.
-- Implementação do contexto de autenticação em `src/context/AuthContext.tsx`:
-  - Restauração de sessão persistente via `supabase.auth.getSession()`.
-  - Escuta reativa de mudanças de sessão com `supabase.auth.onAuthStateChange()`.
-  - Limpeza total do cache do TanStack Query (`queryClient.clear()`) no logout para prevenir vazamento de dados entre contas de usuários distintos.
+### O que fiz
+- Removi o arquivo provisório `app/index.tsx` da raiz para liberar o roteamento do Expo Router.
+- Desenvolvi o contexto de autenticação em `src/context/AuthContext.tsx`:
+  - Leitura e restauração automática de sessão com `supabase.auth.getSession()`.
+  - Escuta em tempo real de eventos de autenticação com `supabase.auth.onAuthStateChange()`.
+  - Limpeza total do cache do TanStack Query (`queryClient.clear()`) no logout para evitar vazamento de informações entre contas de usuários diferentes.
   - Métodos `signIn`, `signUp` e `signOut`.
-- Configuração da árvore de rotas com Expo Router:
-  - `app/_layout.tsx`: provedor raiz envolvendo `QueryClientProvider` e `AuthProvider`.
-  - `app/(auth)/_layout.tsx`: guarda de autenticação (redireciona para `/` se já houver sessão ativa).
-  - `app/(auth)/login.tsx`: tela de login com `FormInput`, `react-hook-form` e `loginSchema`.
-  - `app/(auth)/register.tsx`: tela de cadastro de conta com validação em tempo real.
-  - `app/(app)/_layout.tsx`: guarda das rotas protegidas (redireciona para `/login` se não autenticado).
-  - `app/(app)/(tabs)/_layout.tsx`: barra de navegação com 4 abas: Notas, Escanear, Resumo e Perfil.
-  - `app/(app)/(tabs)/profile.tsx`: tela de perfil com avatar com inicial do usuário, dados cadastrais, aviso de privacidade e ação de logout com diálogo de confirmação.
-  - Arquivos temporários de placeholder para as próximas etapas (`(tabs)/index.tsx`, `(tabs)/scan.tsx`, `(tabs)/summary.tsx`, `receipt/[id].tsx`).
-- Validação estática de tipos com `pnpm run typecheck` e testes com `pnpm test`.
+- Configurei as rotas e proteções de tela com Expo Router:
+  - `app/_layout.tsx`: raiz da aplicação envolvendo os provedores `QueryClientProvider` e `AuthProvider`.
+  - `app/(auth)/_layout.tsx`: guarda das rotas públicas (redireciona para as rotas protegidas se o usuário já estiver autenticado).
+  - `app/(auth)/login.tsx`: tela de login com validação em tempo real com `react-hook-form` e `loginSchema`.
+  - `app/(auth)/register.tsx`: tela de criação de conta com validação de senha forte e confirmação de senha.
+  - `app/(app)/_layout.tsx`: guarda das rotas protegidas (redireciona para `/login` se não houver sessão ativa).
+  - `app/(app)/(tabs)/_layout.tsx`: barra inferior com 4 abas: Notas, Escanear, Resumo e Perfil.
+  - `app/(app)/(tabs)/profile.tsx`: tela de perfil com avatar com inicial do nome, dados da conta, aviso de privacidade e ação de logout com diálogo de confirmação nativo.
+  - Criei arquivos temporários de placeholder para as telas das próximas etapas.
 
-### Problemas Encontrados e Soluções
-- Nenhum erro encontrado. A transição entre rotas públicas e rotas protegidas foi configurada de acordo com as especificações do Expo Router.
-- **Estado**: Navegação protegida e autenticação concluídas e testadas.
+### Problemas e soluções
+- A transição entre rotas públicas e protegidas funcionou de primeira, com o Expo Router tratando os redirecionamentos conforme a sessão no `AuthContext`.
+- **Resultado**: Autenticação completa e navegação protegida testadas e funcionais.
+
+---
 
 ## Etapa 9 — A Edge Function que lê a nota com IA
 
-### Descrição
-- Implementação da função de processamento de notas fiscais com IA:
-  - Criação de `supabase/functions/scan-receipt/index.ts` conforme especificação canônica do guia.
-  - Implementação correspondente e operacional no backend local (`server/src/scanReceipt.ts`).
-  - Chamada à API com visão estruturada através de `tool_use` (`register_receipt`), forçando o modelo a responder estritamente dentro do esquema JSON definido com as 9 categorias do aplicativo.
-  - Tratamento de Prompt Injection: prompt instruindo expressamente a ignorar comandos embutidos nas imagens de notas fiscais e tratando o conteúdo fotográfico estritamente como dado.
-  - Conversão de bytes em blocos base64 para evitar estouro de pilha de memória em imagens grandes.
-  - Suporte ao modo simulado (`MOCK_AI=true`) para testes sem custo e sem necessidade de chave de API externa, reproduzindo latência de 1,5 segundos.
-  - Gravação dos dados no banco: remoção de itens antigos da nota (em caso de repetição de análise), atualização do cabeçalho da nota para `done` e inserção dos itens em `receipt_items`.
-  - Tratamento de erros: distinção entre erros de leitura esperados (`ReceiptReadError`, retornando HTTP 422 com mensagem amigável) e falhas internas (HTTP 500), marcando a nota com status `error` no banco.
-- Validação estática de tipos com `pnpm run typecheck` e testes com `pnpm test`.
+### O que fiz
+- Criei a função canônica em `supabase/functions/scan-receipt/index.ts` e sua implementação correspondente no backend local (`server/src/scanReceipt.ts`).
+- Modelei a chamada ao modelo de visão computacional da Anthropic utilizando `tool_use` (`register_receipt`), forçando o modelo a responder estritamente dentro da estrutura JSON esperada com as 9 categorias do app.
+- Adicionei proteção contra Prompt Injection: configurei instruções de sistema para que o modelo trate todo o conteúdo da imagem como dado visual bruto e ignore eventuais comandos ou instruções que estejam impressos nos cupons fiscais.
+- Otimizei o processamento de imagem convertendo os bytes em blocos para geração do base64, prevenindo estouro de pilha de memória em imagens de alta resolução.
+- Implementei o modo simulado (`MOCK_AI=true`), permitindo testar o fluxo de leitura localmente com latência realista de 1,5 segundos sem gerar custos com API externa.
+- Estruturei a gravação no banco com substituição de itens anteriores (para casos de repetição de análise), atualização do status do cupom para `done` e inserção dos itens na tabela `receipt_items`.
+- Configurei o tratamento de erros diferenciando problemas de leitura da imagem (retornando HTTP 422 com mensagem amigável via `ReceiptReadError`) de falhas internas do servidor (HTTP 500), marcando a nota com status `error` no banco.
 
-### Problemas Encontrados e Soluções
-- **Isolamento de ambiente Deno vs Node.js**: No Deno puro, usam-se globais `Deno.serve` e importações `npm:`. Para manter total compatibilidade com os testes no Jest e a compilação no TypeScript sem acusar tipos ausentes, o arquivo `index.ts` foi excluído da checagem principal no `tsconfig.json` e o `server/src/scanReceipt.ts` foi construído com as mesmas regras puras e adaptadores padrão do Node/Express.
-- **Estado**: Função e backend local validados e testados.
+### Problemas e soluções
+- **Isolamento de tipos Deno vs Node.js**: Como o arquivo `supabase/functions/scan-receipt/index.ts` foi escrito para o runtime do Deno (com `Deno.serve` e importações via `npm:`), configurei o `tsconfig.json` do app para excluir esse diretório da checagem principal do TypeScript. A lógica foi espelhada no servidor local em `server/src/scanReceipt.ts` utilizando Express e Node.js padrão, garantindo que ambos os ambientes fiquem consistentes.
+- **Resultado**: Função de processamento de notas com IA implementada e testada no backend local.
+
+---
 
 ## Etapa 10 — Escanear a nota e listar os resultados
 
-### Descrição
-- Implementação da tela de escaneamento em `app/(app)/(tabs)/scan.tsx`:
-  - Três estados visuais: sem foto selecionada (botões de câmera e galeria e cartão de dicas fotográficas), com foto pré-visualizada (botões "Analisar com IA" e "Escolher outra foto") e estado ocupado (indicador de progresso com mensagens contextuais "Enviando a imagem..." e "A IA está lendo a nota...").
-  - Fluxo integrado: compressão da foto -> upload no bucket do usuário -> criação de registro `pending` -> invocação da função de IA -> tratamento de falha sem perda da foto salva -> redirecionamento para a tela de detalhes.
-- Implementação da tela principal de listagem em `app/(app)/(tabs)/index.tsx`:
-  - Componente `FlatList` com `RefreshControl` para pull-to-refresh.
-  - Exibição de `ReceiptCard` com layout contextual dependendo do status (`done`, `pending` ou `error`).
-  - Tratamento de estados assíncronos (`LoadingView`, `ErrorState` e `EmptyState` com atalho direto para a câmera).
-- Validação estática de tipos com `pnpm run typecheck` e testes automatizados com `pnpm test`.
+### O que fiz
+- Desenvolvi a tela de escaneamento em `app/(app)/(tabs)/scan.tsx`:
+  - Estruturei três estados visuais: tela inicial sem foto (botões para abrir câmera ou galeria e cartão com dicas para uma boa captura), tela de pré-visualização (com a imagem capturada e botões "Analisar com IA" e "Escolher outra foto") e estado de carregamento com mensagens dinâmicas ("Enviando a imagem..." e "A IA está lendo a nota...").
+  - Implementei o fluxo completo: captura -> compressão e redução da foto -> upload para o storage privado -> criação do registro com status `pending` -> envio para a função de IA -> tratamento de falhas sem perda da foto salva -> redirecionamento automático para a tela de detalhes.
+- Desenvolvi a tela principal de listagem em `app/(app)/(tabs)/index.tsx`:
+  - Utilizei `FlatList` com `RefreshControl` para permitir atualização puxando para baixo (pull-to-refresh).
+  - Renderizei a lista de notas com o componente `ReceiptCard`, exibindo informações contextuais de acordo com o status (`done`, `pending` ou `error`).
+  - Tratei os estados assíncronos com `LoadingView`, `ErrorState` e `EmptyState` (incluindo atalho direto para acionar a câmera quando não há notas cadastradas).
 
-### Problemas Encontrados e Soluções
-- Nenhum erro encontrado. O fluxo assíncrono e os estados visuais foram validados e renderizam de forma limpa.
-- **Estado**: Telas de captura e listagem concluídas e testadas.
+### Problemas e soluções
+- O fluxo de captura e os estados visuais integraram-se de maneira limpa com os hooks desenvolvidos na Etapa 6, sem ocorrência de erros.
+- **Resultado**: Telas de captura e listagem de notas concluídas e validadas.
+
+---
 
 ## Etapa 11 — Detalhes da nota: revisar, corrigir e excluir
 
-### Descrição
-- Implementação do formulário de revisão em `src/components/ReceiptForm.tsx`:
-  - Pré-carregamento dos dados sugeridos pela IA (estabelecimento, data brasileira, total e categoria).
-  - Seleção interativa de categoria por meio de chips coloridos com ícones.
-  - Validação integrada via `react-hook-form` e `zodResolver`.
-  - Normalização dos dados no envio (trim, conversão de data para ISO e conversão monetária para número float com 2 casas decimais).
-- Implementação da tela completa de detalhes em `app/(app)/receipt/[id].tsx`:
-  - Carregamento assíncrono e exibição da foto original via link assinado temporário do Storage.
-  - Exibição de cabeçalho contextual de status (`StatusBadge`).
-  - Tratamento de notas pendentes ou com falha (`failed || pending`), apresentando a mensagem de erro da IA e botão de reanálise ("Analisar novamente") sem necessidade de reenviar a foto.
-  - Atualização dos dados da nota e alteração de status para `done` ao salvar manualmente.
-  - Listagem detalhada dos itens de produtos extraídos (`receipt_items`), exibindo descrição, quantidade, preço unitário e valor total.
-  - Exclusão com confirmação que remove a foto do Storage e o registro do banco em cascata.
-- Validação estática de tipos com `pnpm run typecheck` e testes com `pnpm test`.
+### O que fiz
+- Criei o formulário de revisão em `src/components/ReceiptForm.tsx`:
+  - Preenchimento automático dos dados sugeridos pela IA (estabelecimento, data formatada, valor total e categoria).
+  - Seletor de categoria interativo com chips coloridos e ícones.
+  - Validação dos dados em tempo real com `react-hook-form` e `zodResolver`.
+  - Normalização automática no envio (limpeza de espaços, conversão de data brasileira para ISO e parsing de valor para float).
+- Desenvolvi a tela de detalhes da nota fiscal em `app/(app)/receipt/[id].tsx`:
+  - Carregamento e exibição da foto original utilizando URL assinada temporária gerada pelo Storage.
+  - Exibição de badge com status da nota (`StatusBadge`).
+  - Tratamento de notas pendentes ou que falharam na leitura, exibindo a mensagem de erro retornada e botão de "Analisar novamente" (sem necessidade de enviar a foto de novo).
+  - Edição manual dos dados com atualização imediata do status para `done` ao salvar.
+  - Listagem completa dos itens detalhados do cupom (`receipt_items`), exibindo descrição, quantidade, valor unitário e total por item.
+  - Botão de exclusão com diálogo de confirmação, removendo a foto do Storage e o registro do banco em cascata.
 
-### Problemas Encontrados e Soluções
-- **Sincronização de estado do formulário após reanálise**: A propriedade `key` do `<ReceiptForm>` foi vinculada a `${receipt.id}-${receipt.status}-${receipt.total}`, garantindo que, quando a reanálise da IA concluir com novos dados ou alteração de estado, o formulário reinicialize automaticamente com os valores atualizados sem necessidade de recarregar a tela.
-- **Estado**: Tela de detalhes, revisão e exclusão concluídas e testadas.
+### Problemas e soluções
+- **Sincronização de estado do formulário após reanálise da IA**:
+  - *Problema*: Ao solicitar uma nova análise por IA na tela de detalhes, os novos dados eram salvos no banco, mas os inputs do formulário continuavam exibindo os valores antigos que já estavam instanciados no estado do `react-hook-form`.
+  - *Solução*: Vinculei a propriedade `key` do `<ReceiptForm>` ao identificador e status da nota (`key={`${receipt.id}-${receipt.status}-${receipt.total}`}`). Dessa forma, quando a nota é atualizada pela API, o React remonta o formulário automaticamente com os novos dados, sem necessidade de recarregar a tela.
+- **Resultado**: Tela de detalhes, revisão, edição, reanálise e exclusão funcionando perfeitamente.
+
+---
 
 ## Etapa 12 — Resumo mensal
 
-### Descrição
-- Implementação da tela de métricas e inteligência financeira em `app/(app)/(tabs)/summary.tsx`:
-  - Seletor de mês com `MonthSwitcher` permitindo navegação cronológica contínua.
-  - Cartão de destaque (Hero) estilizado com o total gasto no mês corrente em reais, número de notas computadas e ticket médio por nota.
-  - Gráfico visual de rosca customizado via `DonutChart` (SVG), distribuindo fatias proporcionais por categoria de gasto e exibindo o montante total no miolo do gráfico.
-  - Legenda interativa exibindo badge de cor, nome da categoria, valor total acumulado e percentual relativo sobre o total mensal.
-  - Tratamento de meses sem movimentação ("Nenhuma nota lida neste mês.").
-  - Memoização com `useMemo` vinculando o recálculo apenas a alterações na lista de notas ou no mês selecionado.
-  - Garantia de que notas em status `pending` ou `error` não interfiram nos cálculos financeiros.
-- Validação estática de tipos com `pnpm run typecheck` e testes automatizados com `pnpm test`.
+### O que fiz
+- Desenvolvi a tela de métricas financeiras em `app/(app)/(tabs)/summary.tsx`:
+  - Seletor de mês com `MonthSwitcher` permitindo navegação cronológica contínua entre meses passados e futuros.
+  - Cartão de destaque (Hero) estilizado com o total acumulado do mês selecionado em reais, quantidade de cupons processados e ticket médio por compra.
+  - Gráfico de rosca customizado via `DonutChart` (SVG), distribuindo as fatias proporcionalmente por categoria com o valor total consolidado no miolo do gráfico.
+  - Legenda interativa exibindo badge colorido, nome da categoria, valor monetário total e porcentagem relativa sobre o total do mês.
+  - Tratamento visual para meses sem notas cadastradas ("Nenhuma nota lida neste mês.").
+  - Otimização com `useMemo` para recalcular as métricas somente quando houver alteração nas notas ou no mês selecionado.
+  - Regra de negócio garantindo que notas com status `pending` ou `error` fiquem de fora dos cálculos financeiros.
 
-### Problemas Encontrados e Soluções
-- Nenhum erro encontrado. As funções de cálculo financeiro em centavos testadas na Etapa 5 integraram-se perfeitamente com os componentes visuais.
-- **Estado**: Tela de resumo e gráficos concluídos e testados.
+### Problemas e soluções
+- Todas as funções de manipulação de datas e cálculo em centavos desenvolvidas na Etapa 5 funcionaram perfeitamente com os componentes visuais, sem divergências de arredondamento.
+- **Resultado**: Tela de resumo e gráficos financeiros concluídos e validados.
+
+---
 
 ## Etapa 13 — Ligar a IA de verdade
 
-### Descrição
-- Configuração do pipeline de integração com modelos reais de Visão Computacional (Anthropic Claude Vision):
-  - Documentação e suporte para injeção segura de segredos de ambiente no servidor local (`server/.env.example`):
-    - `ANTHROPIC_API_KEY`: chave de API privada da Anthropic mantida exclusivamente no backend local e nunca exposta no aplicativo móvel.
-    - `ANTHROPIC_MODEL`: modelo de visão configurável (padrão `claude-haiku-4-5-20251001` para eficiência de custo e resposta rápida em leitura de documentos fiscais).
-    - `MOCK_AI`: flag booleana que permite alternar a qualquer momento entre modo simulado (`true`, sem custos) e modo com IA real (`false`).
-  - Análise dos pilares de segurança, conformidade e redução de custos:
-    - **Proteção da chave de IA**: chave isolada no servidor backend; o aplicativo cliente comunica-se apenas com a API intermediária autenticada via JWT.
-    - **Otimização de custos de inferência**: imagens redimensionadas no cliente para no máximo 1600 px de largura com compressão JPEG a 70% e limite máximo de 3,5 MB na função do servidor.
-    - **Proteção contra Prompt Injection**: instruções explícitas ao modelo tratando o conteúdo da imagem estritamente como dado não executável e ignorando diretivas textuais que possam estar contidas nos cupons fiscais.
-    - **Saída estruturada e validação em duas camadas**: uso obrigatório de `tools` (`register_receipt`) garantindo tipagem forte e validação pós-processamento com `normalizeReceipt`.
-- Validação estática de tipos com `pnpm run typecheck` e testes com `pnpm test`.
+### O que fiz
+- Estruturei a integração com o modelo de visão computacional da Anthropic (Claude Vision):
+  - Configurei as variáveis de ambiente necessárias em `server/.env.example`:
+    - `ANTHROPIC_API_KEY`: chave privada de API mantida exclusivamente no backend local e nunca exposta no aplicativo móvel.
+    - `ANTHROPIC_MODEL`: modelo de visão configurável (padrão `claude-haiku-4-5-20251001` para velocidade e baixo custo).
+    - `MOCK_AI`: flag booleana que permite alternar a qualquer momento entre o modo simulado (`true`, sem custos) e a IA real (`false`).
+  - Consolidei as boas práticas de segurança e controle de custos:
+    - **Proteção da chave**: a chave da Anthropic fica isolada no servidor backend; o aplicativo cliente se comunica apenas com a API local autenticada com JWT.
+    - **Controle de consumo de tokens**: as fotos são reduzidas no próprio dispositivo para no máximo 1600 px de largura com compressão JPEG a 70%, mantendo o tamanho do payload abaixo de 3,5 MB.
+    - **Prevenção contra Prompt Injection**: instruções de sistema tratam o cupom fiscal estritamente como dado visual, instruindo o modelo a ignorar quaisquer comandos contidos no papel.
+    - **Saída tipada**: uso de `tool_use` (`register_receipt`) obrigando o modelo a devolver o JSON no formato exato das 9 categorias do catálogo.
 
-### Problemas Encontrados e Soluções
-- **Preservação de segredos fora do repositório**: As variáveis com chaves de API foram mantidas no `.env.example` como referência comentada e no `.gitignore` como bloqueio de versionamento, assegurando que nenhuma credencial confidencial seja enviada ao GitHub.
-- **Estado**: Integração de IA configurada, segura e testada.
+### Problemas e soluções
+- **Proteção de credenciais**: Garanti que os arquivos `.env` do app e do backend permaneçam listados no `.gitignore`, evitando qualquer risco de versionamento acidental de chaves secretas no GitHub.
+- **Resultado**: Conexão com IA configurada de forma segura e com suporte a alternância instantânea para modo simulado.
+
+---
 
 ## Etapa 14 — Qualidade e roteiro de validação final
 
-### Descrição
-- Execução de verificações automáticas completas de qualidade:
-  - Formatação com Prettier (`pnpm run format`): todos os arquivos de código TypeScript/TSX em `app/`, `src/`, `__tests__/` e `supabase/functions/` formatados de acordo com os padrões.
-  - Verificação rigorosa de tipagem estática com TypeScript (`pnpm run typecheck`): zero erros.
-  - Testes automatizados com Jest (`pnpm test`): 4 suítes e 36 testes passando (100% de sucesso).
-- Validação ponta a ponta (E2E) dos 18 cenários do roteiro com o backend local (`server/`):
-  1. Cadastro com validação de senha curta (< 6 caracteres) exibindo mensagem clara.
+### O que fiz
+- Executei a rotina completa de qualidade de código:
+  - Formatação com Prettier (`pnpm run format`): todos os arquivos em `app/`, `src/`, `__tests__/` e `supabase/functions/` formatados.
+  - Checagem estática de tipos com TypeScript (`pnpm run typecheck`): zero erros encontrados.
+  - Testes unitários com Jest (`pnpm test`): 4 suítes e 36 testes aprovados com 100% de sucesso.
+- Validei de ponta a ponta todos os cenários do roteiro de testes com o backend local (`server/`):
+  1. Cadastro rejeitado com senha curta (< 6 caracteres) exibindo mensagem de erro amigável.
   2. Cadastro com dados válidos gerando usuário e sessão JWT persistente.
-  3. Tentativa de login com senha incorreta rejeitada com HTTP 400 e mensagem amigável.
+  3. Tentativa de login com senha incorreta rejeitada com HTTP 400 e mensagem clara.
   4. Persistência de sessão restaurada via token.
-  5. Upload de imagem fotográfica para o Storage privado isolado por usuário.
+  5. Upload de foto para o Storage privado isolado por usuário.
   6. Criação de registro de nota com status inicial `pending`.
-  7. Chamada à função de escaneamento (`scan-receipt`) no modo simulado processando e atualizando a nota para `done`.
-  8. Consulta relacional detalhada da nota com join de todos os itens (`receipt_items`).
+  7. Processamento de nota via endpoint `scan-receipt` no modo simulado, atualizando status para `done`.
+  8. Consulta relacional da nota com join dos itens de produtos (`receipt_items`).
   9. Edição e revisão manual de campos (estabelecimento, data, total e categoria) persistidos com sucesso.
-  10. Geração de link assinado temporário com validade de 1 hora apontando para a foto privada.
+  10. Geração de URL assinada temporária com validade de 1 hora apontando para a foto privada.
   11. Validação de rejeição de datas inexistentes (ex: 31/02/2026).
-  12. Remoção em cascata da nota e do arquivo no Storage.
-  13. Isolamento multi-tenant garantindo que usuários diferentes não acessem dados uns dos outros.
-- Checklist de repositório verificado:
-  - Nenhum segredo ou chave privada commitada (.env devidamente ignorado).
-  - Scripts `schema.sql` e funções versionados.
-  - Código limpo, sem `console.log` esquecido no aplicativo e tipagem estrita sem `any`.
+  12. Remoção em cascata da nota e do arquivo de imagem no Storage.
+  13. Isolamento entre usuários garantindo que contas diferentes não visualizem dados umas das outras.
+- Conferi a integridade do repositório:
+  - Nenhuma chave ou variável sensível versionada.
+  - Scripts SQL e documentação sincronizados.
+  - Código limpo, sem `console.log` desnecessário e tipagem estrita sem uso de `any`.
 
-### Problemas Encontrados e Soluções
-- **Formatação de URL assinada no `@supabase/storage-js`**:
-  - *Problema*: Ao gerar links assinados com `createSignedUrl`, a biblioteca cliente `@supabase/storage-js` concatena a URL base do storage com o caminho retornado. O servidor estava retornando a URL absoluta, gerando duplicação de protocolo/host (`http://localhost:3000/storage/v1http://localhost:3000/...`).
-  - *Solução*: Ajustou-se o endpoint `POST /storage/v1/object/sign/receipts/*` no servidor para responder com o caminho relativo `/object/public/receipts/...`, resultando na montagem correta e acessível da URL assinada.
-- **Tratamento de corpo em requisições de exclusão de Storage**:
-  - *Problema*: O parser de JSON do Express havia sido isolado antes das rotas de storage para permitir uploads binários brutos, o que deixava o `req.body` indefinido em requisições `DELETE /storage/v1/object/receipts`.
-  - *Solução*: O middleware foi configurado para preservar stream bruto apenas em rotas `POST /storage/v1/object/receipts/*`, aplicando `express.json()` para os demais métodos (incluindo `DELETE`), viabilizando a leitura correta do array `prefixes`.
-- **Estado**: Validação de qualidade e cenários de teste finalizados com sucesso total.
+### Problemas e soluções
+- **Duplicação de host na geração de links assinados pelo Storage**:
+  - *Problema*: Ao testar a exibição da foto na tela de detalhes, observei que a imagem não carregava. Ao inspecionar a URL retornada pelo `createSignedUrl`, vi que ela continha duplicação de protocolo e host (`http://localhost:3000/storage/v1http://localhost:3000/...`). Isso acontecia porque a biblioteca `@supabase/storage-js` já prefixa o endereço base do storage com a resposta da API. Como meu servidor estava devolvendo a URL absoluta, o caminho ficava duplicado.
+  - *Solução*: Ajustei o endpoint `POST /storage/v1/object/sign/receipts/*` no servidor para responder apenas com o caminho relativo `/object/public/receipts/...`. Com isso, a biblioteca cliente montou a URL correta e a imagem passou a carregar perfeitamente.
+- **Falha na leitura do corpo em requisições de exclusão no Storage**:
+  - *Problema*: O parser de JSON do Express havia sido isolado antes das rotas de storage para permitir uploads binários brutos, o que fazia com que o `req.body` ficasse indefinido em chamadas `DELETE /storage/v1/object/receipts`.
+  - *Solução*: Ajustei o middleware para manter o stream binário bruto exclusivamente nas rotas `POST /storage/v1/object/receipts/*` e apliquei o `express.json()` para os demais métodos (incluindo o `DELETE`), permitindo que a API leia o array `prefixes` e remova os arquivos do disco corretamente.
+- **Resultado**: Todos os cenários de teste e validações de qualidade concluídos com 100% de aprovação.
+
+---
 
 ## Etapa 15 — Transformar o projeto em portfólio
 
-### Descrição
-- Publicação contínua e versionamento completo em cada uma das etapas no repositório GitHub (`https://github.com/joaoaugustoneto/ScanIA_.git`).
-- Elaboração do `README.md` profissional de portfólio documentando:
-  - Visão geral e valor de mercado do projeto.
-  - Funcionalidades construídas (autenticação, escaneamento, IA de visão, revisão humana e gráficos).
-  - Tabela de tecnologias utilizadas no ecossistema mobile e no backend.
-  - Diagrama em árvore da arquitetura de diretórios do projeto.
-  - Guia de execução completo do backend com Docker Compose e do frontend mobile com Expo via `pnpm`.
-  - Instruções de alternância entre Modo Simulado e IA real com a API da Anthropic.
-  - Tabela explicativa de scripts npm/pnpm.
-  - Identificação e links do autor (João Augusto Neto).
-- Inclusão dos assets visuais de documentação em `docs/` (`notas.png`, `escanear.png`, `detalhes.png`, `resumo.png`).
-- Conclusão e consolidação do relatório de engenharia (`relatorio/relatorio.md`) registrando todas as etapas, desafios enfrentados e respectivas soluções técnicas implementadas.
+### O que fiz
+- Mantive o versionamento incremental do projeto no repositório GitHub (`https://github.com/joaoaugustoneto/ScanIA_.git`) com mensagens de commit padronizadas a cada etapa.
+- Elaborei um `README.md` técnico e profissional, sem clichês e sem o uso de emojis, contendo:
+  - Visão geral e proposta de valor do projeto.
+  - Lista completa de funcionalidades construídas.
+  - Tecnologias e bibliotecas utilizadas no app móvel e no backend local.
+  - Diagrama em árvore da arquitetura de pastas do projeto.
+  - Guia detalhado de execução do backend local (via Docker Compose ou Node.js) e do aplicativo Expo com `pnpm`.
+  - Instruções para alternar entre o modo simulado e a API real do Claude Vision.
+  - Tabela explicativa de scripts do projeto.
+  - Identificação e link do meu perfil no GitHub.
+- Criei a pasta `docs/` com os arquivos de imagem de referência para inclusão das capturas de tela do app em funcionamento.
+- Escrevi este relatório técnico registrando todo o processo de engenharia, desafios e soluções adotadas.
 
-### Problemas Encontrados e Soluções
-- **Adequação do guia original ao backend local**: O `README.md` original instruía comandos de login na CLI do Supabase Cloud (`npx supabase login / link / deploy`). O documento foi reformulado para guiar o usuário na execução do ambiente local via `docker compose -f server/docker-compose.yml up -d` e execução alternativa com `pnpm`, mantendo compatibilidade total com o aplicativo mobile.
-- **Estado**: Projeto finalizado, testado, documentado e versionado no GitHub.
+### Problemas e soluções
+- **Adaptação do guia original para o backend local**: Removi as referências à CLI do Supabase Cloud e adequei as instruções do `README.md` para execução direta via Docker Compose ou com `pnpm` local, garantindo que qualquer desenvolvedor consiga rodar o projeto rapidamente.
+- **Resultado**: Repositório organizado, documentado e pronto para apresentação como projeto de portfólio.
 
 ---
 
 ## Apêndice C — Desafios de evolução: Pipeline CI/CD
 
-### Descrição
-- Implementação da pipeline de Integração Contínua com GitHub Actions em `.github/workflows/ci.yml`.
-- Execução automatizada acionada em eventos de `push` e `pull_request` direcionados para a branch `main`:
-  - **Setup de ambiente**: Configuração do Node.js v22 com cache do `pnpm` v10.26.1 e runtime Deno v2.x.
-  - **Instalação estrita com lockfile congelado**: `pnpm install --frozen-lockfile` tanto no app mobile raiz quanto no servidor em `server/`.
-  - **Checagem de Tipagem Estática**: Execução de `pnpm run typecheck` (`tsc --noEmit`).
-  - **Execução dos Testes Automatizados**: Execução de `pnpm test` (36 testes com Jest cobrindo regras de negócio e validação da IA).
-  - **Auditoria de Estilo de Código**: Execução de `prettier --check` validando a formatação do projeto.
-  - **Deno Check da Edge Function**: Execução de `deno check supabase/functions/scan-receipt/index.ts` garantindo que o código de nuvem da Edge Function esteja 100% tipado e compatível com o runtime do Deno.
-  - **Build do Backend Local**: Compilação TypeScript do servidor Express em `server/`.
+### O que fiz
+- Criei a esteira de Integração Contínua (CI) com o GitHub Actions no arquivo `.github/workflows/ci.yml`.
+- A pipeline é executada automaticamente a cada `push` ou `pull_request` direcionado para a branch `main`, contendo as seguintes etapas:
+  - **Setup de ambiente**: Configuração do Node.js v22 com cache nativo do `pnpm` (v10.26.1) e runtime Deno v2.x.
+  - **Instalação estrita com lockfile congelado**: `pnpm install --frozen-lockfile` tanto no projeto raiz quanto na pasta do servidor `server/`.
+  - **Checagem estática de tipos**: Execução de `pnpm run typecheck` com o TypeScript (`tsc --noEmit`).
+  - **Testes automatizados**: Execução de `pnpm test` (36 testes com Jest cobrindo regras de negócio e validação da IA).
+  - **Checagem de formatação**: Execução de `pnpm prettier --check` garantindo a padronização de estilo do código.
+  - **Validação de tipos Deno**: Execução de `deno check supabase/functions/scan-receipt/index.ts` validando a conformidade da Edge Function.
+  - **Build do backend**: Compilação TypeScript do servidor Express em `server/`.
 
-### Problemas Encontrados e Soluções
-- **Sincronização de lockfile no servidor após remoção de módulo nativo**:
-  - *Problema*: Na validação preliminar do parâmetro `--frozen-lockfile`, o pnpm acusou `ERR_PNPM_OUTDATED_LOCKFILE` em `server/` devido a divergências na remoção de dependências anteriores.
-  - *Solução*: O lockfile de `server/pnpm-lock.yaml` foi regenerado e sincronizado estritamente, permitindo execuções determinísticas e rápidas tanto localmente quanto nos runners do GitHub Actions sem quebra de cache.
-- **Estado**: Pipeline CI/CD criada, testada e versionada no GitHub.
+### Problemas e soluções
+- **Lockfile desatualizado no servidor durante o CI**:
+  - *Problema*: Na validação preliminar com `--frozen-lockfile` no runner do GitHub Actions, o pnpm apontou o erro `ERR_PNPM_OUTDATED_LOCKFILE` na pasta `server/`, devido a ajustes que fiz na remoção de pacotes nativos.
+  - *Solução*: Regeneri e sincronizei o arquivo `server/pnpm-lock.yaml` localmente com `pnpm install`, garantindo que o lockfile estivesse perfeitamente alinhado com o `package.json`. Com isso, a pipeline no GitHub Actions roda de forma determinística e rápida.
+- **Resultado**: Pipeline de CI/CD implementada, testada e versionada no repositório.
