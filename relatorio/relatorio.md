@@ -190,3 +190,21 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - Nenhum erro encontrado. A transição entre rotas públicas e rotas protegidas foi configurada de acordo com as especificações do Expo Router.
 - **Estado**: Navegação protegida e autenticação concluídas e testadas.
+
+## Etapa 9 — A Edge Function que lê a nota com IA
+
+### Descrição
+- Implementação da função de processamento de notas fiscais com IA:
+  - Criação de `supabase/functions/scan-receipt/index.ts` conforme especificação canônica do guia.
+  - Implementação correspondente e operacional no backend local (`server/src/scanReceipt.ts`).
+  - Chamada à API com visão estruturada através de `tool_use` (`register_receipt`), forçando o modelo a responder estritamente dentro do esquema JSON definido com as 9 categorias do aplicativo.
+  - Tratamento de Prompt Injection: prompt instruindo expressamente a ignorar comandos embutidos nas imagens de notas fiscais e tratando o conteúdo fotográfico estritamente como dado.
+  - Conversão de bytes em blocos base64 para evitar estouro de pilha de memória em imagens grandes.
+  - Suporte ao modo simulado (`MOCK_AI=true`) para testes sem custo e sem necessidade de chave de API externa, reproduzindo latência de 1,5 segundos.
+  - Gravação dos dados no banco: remoção de itens antigos da nota (em caso de repetição de análise), atualização do cabeçalho da nota para `done` e inserção dos itens em `receipt_items`.
+  - Tratamento de erros: distinção entre erros de leitura esperados (`ReceiptReadError`, retornando HTTP 422 com mensagem amigável) e falhas internas (HTTP 500), marcando a nota com status `error` no banco.
+- Validação estática de tipos com `pnpm run typecheck` e testes com `pnpm test`.
+
+### Problemas Encontrados e Soluções
+- **Isolamento de ambiente Deno vs Node.js**: No Deno puro, usam-se globais `Deno.serve` e importações `npm:`. Para manter total compatibilidade com os testes no Jest e a compilação no TypeScript sem acusar tipos ausentes, o arquivo `index.ts` foi excluído da checagem principal no `tsconfig.json` e o `server/src/scanReceipt.ts` foi construído com as mesmas regras puras e adaptadores padrão do Node/Express.
+- **Estado**: Função e backend local validados e testados.
