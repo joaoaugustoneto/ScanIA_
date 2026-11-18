@@ -224,3 +224,24 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - Nenhum erro encontrado. O fluxo assíncrono e os estados visuais foram validados e renderizam de forma limpa.
 - **Estado**: Telas de captura e listagem concluídas e testadas.
+
+## Etapa 11 — Detalhes da nota: revisar, corrigir e excluir
+
+### Descrição
+- Implementação do formulário de revisão em `src/components/ReceiptForm.tsx`:
+  - Pré-carregamento dos dados sugeridos pela IA (estabelecimento, data brasileira, total e categoria).
+  - Seleção interativa de categoria por meio de chips coloridos com ícones.
+  - Validação integrada via `react-hook-form` e `zodResolver`.
+  - Normalização dos dados no envio (trim, conversão de data para ISO e conversão monetária para número float com 2 casas decimais).
+- Implementação da tela completa de detalhes em `app/(app)/receipt/[id].tsx`:
+  - Carregamento assíncrono e exibição da foto original via link assinado temporário do Storage.
+  - Exibição de cabeçalho contextual de status (`StatusBadge`).
+  - Tratamento de notas pendentes ou com falha (`failed || pending`), apresentando a mensagem de erro da IA e botão de reanálise ("Analisar novamente") sem necessidade de reenviar a foto.
+  - Atualização dos dados da nota e alteração de status para `done` ao salvar manualmente.
+  - Listagem detalhada dos itens de produtos extraídos (`receipt_items`), exibindo descrição, quantidade, preço unitário e valor total.
+  - Exclusão com confirmação que remove a foto do Storage e o registro do banco em cascata.
+- Validação estática de tipos com `pnpm run typecheck` e testes com `pnpm test`.
+
+### Problemas Encontrados e Soluções
+- **Sincronização de estado do formulário após reanálise**: A propriedade `key` do `<ReceiptForm>` foi vinculada a `${receipt.id}-${receipt.status}-${receipt.total}`, garantindo que, quando a reanálise da IA concluir com novos dados ou alteração de estado, o formulário reinicialize automaticamente com os valores atualizados sem necessidade de recarregar a tela.
+- **Estado**: Tela de detalhes, revisão e exclusão concluídas e testadas.
