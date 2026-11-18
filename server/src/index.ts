@@ -15,16 +15,9 @@ app.use(
   cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'authorization',
-      'x-client-info',
-      'apikey',
-      'content-type',
-      'prefer',
-      'accept',
-    ],
   })
 );
+app.options('*', cors());
 
 // Raw body parser for storage uploads ONLY
 app.use((req, res, next) => {
