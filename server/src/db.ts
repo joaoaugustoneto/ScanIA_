@@ -157,12 +157,20 @@ class ResilientDatabase {
 
     // 4. SELECT * FROM receipts
     if (/SELECT \* FROM receipts/i.test(normalized)) {
-      const userId = params[0];
-      const receiptId = params[1];
+      let list = [...this.localData.receipts];
 
-      let list = this.localData.receipts.filter((r) => r.user_id === userId);
-      if (receiptId) {
+      if (/WHERE id = \$1 AND user_id = \$2/i.test(normalized)) {
+        const [receiptId, userId] = params;
+        list = list.filter((r) => r.id === receiptId && r.user_id === userId);
+      } else if (/WHERE user_id = \$1 AND id = \$2/i.test(normalized)) {
+        const [userId, receiptId] = params;
+        list = list.filter((r) => r.id === receiptId && r.user_id === userId);
+      } else if (/WHERE id = \$1/i.test(normalized)) {
+        const [receiptId] = params;
         list = list.filter((r) => r.id === receiptId);
+      } else if (/WHERE user_id = \$1/i.test(normalized)) {
+        const [userId] = params;
+        list = list.filter((r) => r.user_id === userId);
       }
 
       if (/ORDER BY created_at ASC/i.test(normalized)) {
@@ -202,7 +210,7 @@ class ResilientDatabase {
       return { rows: [newReceipt] as any };
     }
 
-    // 7. UPDATE receipts SET merchant = COALESCE($1, merchant)... WHERE id = $8 AND user_id = $9
+    // 7. UPDATE receipts SET ...
     if (/UPDATE receipts/i.test(normalized)) {
       if (/SET status = 'error'/i.test(normalized)) {
         const [error_message, id] = params;
@@ -251,7 +259,7 @@ class ResilientDatabase {
     if (/DELETE FROM receipts/i.test(normalized)) {
       const id = params[0];
       const userId = params[1];
-      this.localData.receipts = this.localData.receipts.filter((r) => !(r.id === id && r.user_id === userId));
+      this.localData.receipts = this.localData.receipts.filter((r) => !(r.id === id && (userId ? r.user_id === userId : true)));
       this.localData.receipt_items = this.localData.receipt_items.filter((i) => i.receipt_id !== id);
       this.saveLocalData();
       return { rows: [] };

@@ -17,7 +17,6 @@ function ensureDir(dirPath: string) {
 storageRouter.post('/object/receipts/*', authMiddleware, (req: AuthenticatedRequest, res: Response): void => {
   try {
     const userId = req.user!.id;
-    // URL format: /object/receipts/<path>
     const relativePath = decodeURIComponent(req.params[0] || req.path.replace(/^\/object\/receipts\//, ''));
     
     // Check if user is uploading to their own folder (RLS rule)
@@ -53,15 +52,11 @@ storageRouter.post('/object/receipts/*', authMiddleware, (req: AuthenticatedRequ
 storageRouter.post('/object/sign/receipts/*', authMiddleware, (req: AuthenticatedRequest, res: Response): void => {
   try {
     const relativePath = decodeURIComponent(req.params[0] || req.path.replace(/^\/object\/sign\/receipts\//, ''));
-    const host = req.get('host') || 'localhost:3000';
-    const protocol = req.protocol || 'http';
-    
-    const signedPath = `/storage/v1/object/public/receipts/${relativePath}`;
-    const fullUrl = `${protocol}://${host}${signedPath}`;
+    const relativeSignedUrl = `/object/public/receipts/${relativePath}`;
 
     res.status(200).json({
-      signedURL: fullUrl,
-      signedUrl: fullUrl,
+      signedURL: relativeSignedUrl,
+      signedUrl: relativeSignedUrl,
     });
   } catch (error: any) {
     console.error('Create signed URL error:', error);
@@ -106,7 +101,7 @@ storageRouter.get('/object/authenticated/receipts/*', (req: Request, res: Respon
 storageRouter.delete('/object/receipts', authMiddleware, (req: AuthenticatedRequest, res: Response): void => {
   try {
     const userId = req.user!.id;
-    const { prefixes } = req.body;
+    const prefixes = req.body?.prefixes || [];
     if (Array.isArray(prefixes)) {
       for (const prefix of prefixes) {
         if (prefix.startsWith(`${userId}/`)) {

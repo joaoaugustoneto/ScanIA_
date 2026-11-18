@@ -281,3 +281,38 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - **Preservação de segredos fora do repositório**: As variáveis com chaves de API foram mantidas no `.env.example` como referência comentada e no `.gitignore` como bloqueio de versionamento, assegurando que nenhuma credencial confidencial seja enviada ao GitHub.
 - **Estado**: Integração de IA configurada, segura e testada.
+
+## Etapa 14 — Qualidade e roteiro de validação final
+
+### Descrição
+- Execução de verificações automáticas completas de qualidade:
+  - Formatação com Prettier (`pnpm run format`): todos os arquivos de código TypeScript/TSX em `app/`, `src/`, `__tests__/` e `supabase/functions/` formatados de acordo com os padrões.
+  - Verificação rigorosa de tipagem estática com TypeScript (`pnpm run typecheck`): zero erros.
+  - Testes automatizados com Jest (`pnpm test`): 4 suítes e 36 testes passando (100% de sucesso).
+- Validação ponta a ponta (E2E) dos 18 cenários do roteiro com o backend local (`server/`):
+  1. Cadastro com validação de senha curta (< 6 caracteres) exibindo mensagem clara.
+  2. Cadastro com dados válidos gerando usuário e sessão JWT persistente.
+  3. Tentativa de login com senha incorreta rejeitada com HTTP 400 e mensagem amigável.
+  4. Persistência de sessão restaurada via token.
+  5. Upload de imagem fotográfica para o Storage privado isolado por usuário.
+  6. Criação de registro de nota com status inicial `pending`.
+  7. Chamada à função de escaneamento (`scan-receipt`) no modo simulado processando e atualizando a nota para `done`.
+  8. Consulta relacional detalhada da nota com join de todos os itens (`receipt_items`).
+  9. Edição e revisão manual de campos (estabelecimento, data, total e categoria) persistidos com sucesso.
+  10. Geração de link assinado temporário com validade de 1 hora apontando para a foto privada.
+  11. Validação de rejeição de datas inexistentes (ex: 31/02/2026).
+  12. Remoção em cascata da nota e do arquivo no Storage.
+  13. Isolamento multi-tenant garantindo que usuários diferentes não acessem dados uns dos outros.
+- Checklist de repositório verificado:
+  - Nenhum segredo ou chave privada commitada (.env devidamente ignorado).
+  - Scripts `schema.sql` e funções versionados.
+  - Código limpo, sem `console.log` esquecido no aplicativo e tipagem estrita sem `any`.
+
+### Problemas Encontrados e Soluções
+- **Formatação de URL assinada no `@supabase/storage-js`**:
+  - *Problema*: Ao gerar links assinados com `createSignedUrl`, a biblioteca cliente `@supabase/storage-js` concatena a URL base do storage com o caminho retornado. O servidor estava retornando a URL absoluta, gerando duplicação de protocolo/host (`http://localhost:3000/storage/v1http://localhost:3000/...`).
+  - *Solução*: Ajustou-se o endpoint `POST /storage/v1/object/sign/receipts/*` no servidor para responder com o caminho relativo `/object/public/receipts/...`, resultando na montagem correta e acessível da URL assinada.
+- **Tratamento de corpo em requisições de exclusão de Storage**:
+  - *Problema*: O parser de JSON do Express havia sido isolado antes das rotas de storage para permitir uploads binários brutos, o que deixava o `req.body` indefinido em requisições `DELETE /storage/v1/object/receipts`.
+  - *Solução*: O middleware foi configurado para preservar stream bruto apenas em rotas `POST /storage/v1/object/receipts/*`, aplicando `express.json()` para os demais métodos (incluindo `DELETE`), viabilizando a leitura correta do array `prefixes`.
+- **Estado**: Validação de qualidade e cenários de teste finalizados com sucesso total.

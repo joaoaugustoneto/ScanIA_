@@ -26,12 +26,15 @@ app.use(
   })
 );
 
-// Storage upload routes need raw / streaming bodies before json parser
+// Raw body parser for storage uploads ONLY
+app.use((req, res, next) => {
+  if (req.method === 'POST' && req.path.startsWith('/storage/v1/object/receipts/')) {
+    return next();
+  }
+  express.json({ limit: '10mb' })(req, res, next);
+});
+
 app.use('/storage/v1', storageRouter);
-
-// Standard JSON parsing for other routes
-app.use(express.json({ limit: '10mb' }));
-
 app.use('/auth/v1', authRouter);
 app.use('/rest/v1', restRouter);
 app.use('/functions/v1', functionsRouter);

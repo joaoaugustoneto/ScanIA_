@@ -20,7 +20,9 @@ export const receiptSchema = z.object({
       return !Number.isNaN(n) && n > 0;
     }, 'Valor inválido')
     .refine((v) => parseMoney(v) <= 9_999_999, 'Valor muito alto'),
-  category: z.enum(CATEGORY_NAMES, { errorMap: () => ({ message: 'Escolha uma categoria' }) }),
+  category: z.enum(CATEGORY_NAMES, {
+    errorMap: () => ({ message: 'Escolha uma categoria' }),
+  }),
 });
 
 export type ReceiptFormData = z.infer<typeof receiptSchema>;
