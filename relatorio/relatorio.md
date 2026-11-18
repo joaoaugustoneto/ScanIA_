@@ -330,6 +330,9 @@ Verifiquei e preparei todas as ferramentas necessárias na minha máquina de des
 - **Falha na leitura do corpo em requisições de exclusão no Storage**:
   - *Problema*: O parser de JSON do Express havia sido isolado antes das rotas de storage para permitir uploads binários brutos, o que fazia com que o `req.body` ficasse indefinido em chamadas `DELETE /storage/v1/object/receipts`.
   - *Solução*: Ajustei o middleware para manter o stream binário bruto exclusivamente nas rotas `POST /storage/v1/object/receipts/*` e apliquei o `express.json()` para os demais métodos (incluindo o `DELETE`), permitindo que a API leia o array `prefixes` e remova os arquivos do disco corretamente.
+- **Resolução de dependências transitivas no Metro Bundler com pnpm no Windows**:
+  - *Problema*: Ao executar a aplicação para testes via navegador Web (`pnpm start` e tecla `w`), o Metro Bundler falhou ao empacotar os módulos apontando os erros `Unable to resolve "@babel/runtime/helpers/interopRequireDefault"`, `Unable to resolve "query-string"` e `The required package 'expo-asset' cannot be found`. Isso ocorreu porque o pnpm utiliza isolamento por symlinks em `.pnpm/`, e o Metro no Windows não resolve dependências transitivas de bibliotecas internas se elas não estiverem expressamente mapeadas.
+  - *Solução*: Adicionei `@babel/runtime`, `query-string` e `expo-asset` diretamente às dependências do projeto e criei o arquivo `metro.config.js` habilitando `config.resolver.unstable_enableSymlinks = true` e especificando os caminhos de busca `nodeModulesPaths` para o diretório raiz e o store virtual do pnpm. Com esse ajuste, o bundle Web foi gerado perfeitamente (993 módulos compilados sem erros).
 - **Resultado**: Todos os cenários de teste e validações de qualidade concluídos com 100% de aprovação.
 
 ---
