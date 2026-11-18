@@ -118,3 +118,31 @@ Verificação das ferramentas necessárias para o desenvolvimento:
   - *Problema*: Na primeira execução de `pnpm test`, o Jest falhou com `SyntaxError: Unexpected identifier 'ErrorHandler'` ao carregar `@react-native/js-polyfills/error-guard.js`. Esse erro ocorreu porque o `pnpm` armazena os módulos em uma estrutura aninhada com `.pnpm/`, fazendo com que a expressão regular padrão de `transformIgnorePatterns` do `jest-expo` ignorasse as dependências do React Native, deixando o código Flow sem transpilação.
   - *Solução*: Criou-se o `babel.config.js` com o preset `babel-preset-expo` e ajustou-se a propriedade `transformIgnorePatterns` no `package.json` para suportar tanto caminhos tradicionais quanto o padrão aninhado do pnpm: `(?:\\.pnpm/.*?/node_modules/)?`. Após a correção, todos os 36 testes passaram com 100% de sucesso.
 - **Estado**: 4 suítes e 36 testes passando; typecheck sem erros.
+
+## Etapa 6 — Camada de dados: schemas, serviços e hooks
+
+### Descrição
+- Implementação dos esquemas de validação de dados com Zod:
+  - `src/schemas/auth.ts`: esquemas `loginSchema` e `registerSchema` com validação de formato de e-mail e confirmação de senha idêntica.
+  - `src/schemas/receipt.ts`: validação do formulário de revisão da nota fiscal (`receiptSchema`), incluindo estabelecimento, data brasileira opcional, valor monetário positivo com teto máximo e categoria restrita ao catálogo.
+- Implementação dos serviços de backend em `src/services/receipts.ts`:
+  - `listReceipts()`: listagem ordenada de notas.
+  - `getReceipt(id)`: consulta detalhada incluindo itens de recibo via join relacional.
+  - `uploadReceiptImage(userId, base64)`: decodificação de imagem em `ArrayBuffer` e upload no bucket privado na pasta do usuário.
+  - `createReceiptRecord(imagePath)`: criação do registro com status `pending`.
+  - `analyzeReceipt(receiptId)`: invocação da função de IA com tratamento de erros contextuais em JSON (`FunctionsHttpError`).
+  - `updateReceipt(id, input)`: persistência de dados revisados com alteração de status para `done`.
+  - `deleteReceipt(receipt)`: exclusão em cascata do arquivo físico no Storage e do registro no banco.
+  - `getImageUrl(path)`: geração de URL temporária assinada com validade de 1 hora.
+- Implementação do serviço de imagem em `src/services/imagePicker.ts`:
+  - Abertura de câmera e galeria com requisição de permissões no Android/iOS e cancelamento amigável.
+  - Redimensionamento inteligente proporcional (máximo de 1600 px de largura) e compressão em JPEG a 70% com exportação em base64 (`prepareForUpload`).
+- Implementação dos hooks com TanStack Query em `src/hooks/useReceipts.ts`:
+  - Hooks `useReceipts`, `useReceipt`, `useReceiptImageUrl` (cache de 50 minutos para links assinados).
+  - Mutação `useScanReceipt` com controle granular de progresso (`upload` e `analyze`), tratando falha sem perder a nota salva.
+  - Mutações `useReanalyzeReceipt`, `useUpdateReceipt` e `useDeleteReceipt` com invalidação automática de cache `['receipts']`.
+- Validação estática de tipos com `pnpm run typecheck` e execução dos testes com `pnpm test`.
+
+### Problemas Encontrados e Soluções
+- **Tipagem de erro personalizada no Zod enum**: Ao definir `z.enum(CATEGORY_NAMES, ...)` no schema de notas, garantiu-se o mapa de erro customizado com `errorMap` para manter consistência com a versão instalada do Zod, mantendo 100% de compatibilidade na compilação do TypeScript.
+- **Estado**: Testes e typecheck executados sem erros.
