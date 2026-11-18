@@ -21,13 +21,17 @@ Aplicativo mobile para digitalização e gestão de notas fiscais com inteligên
 
 ## Capturas de tela
 
+### Autenticação
+
 | Login | Cadastro |
 | --- | --- |
 | ![Login](docs/login.png) | ![Cadastro](docs/cadastro.png) |
 
-| Notas | Escanear | Detalhes | Resumo |
+### Painel Principal
+
+| Minhas Notas | Escanear Nota | Resumo Mensal | Perfil |
 | --- | --- | --- | --- |
-| ![Notas](docs/notas.png) | ![Escanear](docs/escanear.png) | ![Detalhes](docs/detalhes.png) | ![Resumo](docs/resumo.png) |
+| ![Notas](docs/notas.png) | ![Escanear](docs/escanear.png) | ![Resumo](docs/resumo.png) | ![Perfil](docs/perfil.png) |
 
 ## Arquitetura
 
