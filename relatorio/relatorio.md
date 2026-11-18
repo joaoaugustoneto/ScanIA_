@@ -166,3 +166,27 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - Nenhum problema de compatibilidade ou tipagem encontrado. Os componentes aderiram rigorosamente aos design tokens e tipagens TypeScript estritas.
 - **Estado**: Componentes criados e testados com sucesso.
+
+## Etapa 8 — Autenticação e navegação protegida
+
+### Descrição
+- Remoção do arquivo provisório `app/index.tsx` da Etapa 2 para evitar conflito de rotas na raiz `/`.
+- Implementação do contexto de autenticação em `src/context/AuthContext.tsx`:
+  - Restauração de sessão persistente via `supabase.auth.getSession()`.
+  - Escuta reativa de mudanças de sessão com `supabase.auth.onAuthStateChange()`.
+  - Limpeza total do cache do TanStack Query (`queryClient.clear()`) no logout para prevenir vazamento de dados entre contas de usuários distintos.
+  - Métodos `signIn`, `signUp` e `signOut`.
+- Configuração da árvore de rotas com Expo Router:
+  - `app/_layout.tsx`: provedor raiz envolvendo `QueryClientProvider` e `AuthProvider`.
+  - `app/(auth)/_layout.tsx`: guarda de autenticação (redireciona para `/` se já houver sessão ativa).
+  - `app/(auth)/login.tsx`: tela de login com `FormInput`, `react-hook-form` e `loginSchema`.
+  - `app/(auth)/register.tsx`: tela de cadastro de conta com validação em tempo real.
+  - `app/(app)/_layout.tsx`: guarda das rotas protegidas (redireciona para `/login` se não autenticado).
+  - `app/(app)/(tabs)/_layout.tsx`: barra de navegação com 4 abas: Notas, Escanear, Resumo e Perfil.
+  - `app/(app)/(tabs)/profile.tsx`: tela de perfil com avatar com inicial do usuário, dados cadastrais, aviso de privacidade e ação de logout com diálogo de confirmação.
+  - Arquivos temporários de placeholder para as próximas etapas (`(tabs)/index.tsx`, `(tabs)/scan.tsx`, `(tabs)/summary.tsx`, `receipt/[id].tsx`).
+- Validação estática de tipos com `pnpm run typecheck` e testes com `pnpm test`.
+
+### Problemas Encontrados e Soluções
+- Nenhum erro encontrado. A transição entre rotas públicas e rotas protegidas foi configurada de acordo com as especificações do Expo Router.
+- **Estado**: Navegação protegida e autenticação concluídas e testadas.
