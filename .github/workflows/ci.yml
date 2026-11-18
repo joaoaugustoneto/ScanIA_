@@ -1,0 +1,57 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Typecheck, Tests & Deno Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install dependencies (App)
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Typecheck (App)
+        run: pnpm run typecheck
+
+      - name: Run Unit Tests (App - 36 tests)
+        run: pnpm test
+
+      - name: Check Code Formatting (Prettier)
+        run: pnpm exec prettier --check "app/**/*.{ts,tsx}" "src/**/*.{ts,tsx}" "__tests__/**/*.ts" "supabase/functions/**/*.ts"
+
+      - name: Deno Check (Edge Function)
+        run: deno check supabase/functions/scan-receipt/index.ts
+
+      - name: Install dependencies (Server)
+        run: |
+          cd server
+          pnpm install --frozen-lockfile
+
+      - name: Build Server
+        run: |
+          cd server
+          pnpm run build

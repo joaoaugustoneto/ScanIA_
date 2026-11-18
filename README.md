@@ -117,6 +117,15 @@ Por padrão, o servidor inicia com `MOCK_AI=true`. Para usar o Claude Vision rea
 | `pnpm run typecheck` | Validação estática de tipos com TypeScript |
 | `pnpm run format` | Formata todo o código com Prettier |
 
+## CI/CD Pipeline (Apêndice C)
+
+O repositório possui uma pipeline de integração contínua automatizada no **GitHub Actions** (`.github/workflows/ci.yml`), executando a cada `push` e `pull_request` na branch `main`:
+- **Typecheck**: Validação estática de tipos com TypeScript (`tsc --noEmit`).
+- **Testes Unitários**: Execução dos 36 testes automatizados com Jest.
+- **Prettier Check**: Conferência da padronização e formatação de código.
+- **Deno Check**: Validação de tipos da Edge Function em ambiente Deno (`deno check`).
+- **Build Server**: Validação e compilação do servidor backend em Node.js/TypeScript.
+
 ## Autor
 
 João Augusto Neto · [GitHub](https://github.com/joaoaugustoneto)

@@ -336,3 +336,24 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - **Adequação do guia original ao backend local**: O `README.md` original instruía comandos de login na CLI do Supabase Cloud (`npx supabase login / link / deploy`). O documento foi reformulado para guiar o usuário na execução do ambiente local via `docker compose -f server/docker-compose.yml up -d` e execução alternativa com `pnpm`, mantendo compatibilidade total com o aplicativo mobile.
 - **Estado**: Projeto finalizado, testado, documentado e versionado no GitHub.
+
+---
+
+## Apêndice C — Desafios de evolução: Pipeline CI/CD
+
+### Descrição
+- Implementação da pipeline de Integração Contínua com GitHub Actions em `.github/workflows/ci.yml`.
+- Execução automatizada acionada em eventos de `push` e `pull_request` direcionados para a branch `main`:
+  - **Setup de ambiente**: Configuração do Node.js v22 com cache do `pnpm` v10.26.1 e runtime Deno v2.x.
+  - **Instalação estrita com lockfile congelado**: `pnpm install --frozen-lockfile` tanto no app mobile raiz quanto no servidor em `server/`.
+  - **Checagem de Tipagem Estática**: Execução de `pnpm run typecheck` (`tsc --noEmit`).
+  - **Execução dos Testes Automatizados**: Execução de `pnpm test` (36 testes com Jest cobrindo regras de negócio e validação da IA).
+  - **Auditoria de Estilo de Código**: Execução de `prettier --check` validando a formatação do projeto.
+  - **Deno Check da Edge Function**: Execução de `deno check supabase/functions/scan-receipt/index.ts` garantindo que o código de nuvem da Edge Function esteja 100% tipado e compatível com o runtime do Deno.
+  - **Build do Backend Local**: Compilação TypeScript do servidor Express em `server/`.
+
+### Problemas Encontrados e Soluções
+- **Sincronização de lockfile no servidor após remoção de módulo nativo**:
+  - *Problema*: Na validação preliminar do parâmetro `--frozen-lockfile`, o pnpm acusou `ERR_PNPM_OUTDATED_LOCKFILE` em `server/` devido a divergências na remoção de dependências anteriores.
+  - *Solução*: O lockfile de `server/pnpm-lock.yaml` foi regenerado e sincronizado estritamente, permitindo execuções determinísticas e rápidas tanto localmente quanto nos runners do GitHub Actions sem quebra de cache.
+- **Estado**: Pipeline CI/CD criada, testada e versionada no GitHub.
