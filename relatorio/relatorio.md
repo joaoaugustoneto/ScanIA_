@@ -316,3 +316,23 @@ Verificação das ferramentas necessárias para o desenvolvimento:
   - *Problema*: O parser de JSON do Express havia sido isolado antes das rotas de storage para permitir uploads binários brutos, o que deixava o `req.body` indefinido em requisições `DELETE /storage/v1/object/receipts`.
   - *Solução*: O middleware foi configurado para preservar stream bruto apenas em rotas `POST /storage/v1/object/receipts/*`, aplicando `express.json()` para os demais métodos (incluindo `DELETE`), viabilizando a leitura correta do array `prefixes`.
 - **Estado**: Validação de qualidade e cenários de teste finalizados com sucesso total.
+
+## Etapa 15 — Transformar o projeto em portfólio
+
+### Descrição
+- Publicação contínua e versionamento completo em cada uma das etapas no repositório GitHub (`https://github.com/joaoaugustoneto/ScanIA_.git`).
+- Elaboração do `README.md` profissional de portfólio documentando:
+  - Visão geral e valor de mercado do projeto.
+  - Funcionalidades construídas (autenticação, escaneamento, IA de visão, revisão humana e gráficos).
+  - Tabela de tecnologias utilizadas no ecossistema mobile e no backend.
+  - Diagrama em árvore da arquitetura de diretórios do projeto.
+  - Guia de execução completo do backend com Docker Compose e do frontend mobile com Expo via `pnpm`.
+  - Instruções de alternância entre Modo Simulado e IA real com a API da Anthropic.
+  - Tabela explicativa de scripts npm/pnpm.
+  - Identificação e links do autor (João Augusto Neto).
+- Inclusão dos assets visuais de documentação em `docs/` (`notas.png`, `escanear.png`, `detalhes.png`, `resumo.png`).
+- Conclusão e consolidação do relatório de engenharia (`relatorio/relatorio.md`) registrando todas as etapas, desafios enfrentados e respectivas soluções técnicas implementadas.
+
+### Problemas Encontrados e Soluções
+- **Adequação do guia original ao backend local**: O `README.md` original instruía comandos de login na CLI do Supabase Cloud (`npx supabase login / link / deploy`). O documento foi reformulado para guiar o usuário na execução do ambiente local via `docker compose -f server/docker-compose.yml up -d` e execução alternativa com `pnpm`, mantendo compatibilidade total com o aplicativo mobile.
+- **Estado**: Projeto finalizado, testado, documentado e versionado no GitHub.
