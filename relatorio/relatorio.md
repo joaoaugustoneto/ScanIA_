@@ -262,3 +262,22 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - Nenhum erro encontrado. As funções de cálculo financeiro em centavos testadas na Etapa 5 integraram-se perfeitamente com os componentes visuais.
 - **Estado**: Tela de resumo e gráficos concluídos e testados.
+
+## Etapa 13 — Ligar a IA de verdade
+
+### Descrição
+- Configuração do pipeline de integração com modelos reais de Visão Computacional (Anthropic Claude Vision):
+  - Documentação e suporte para injeção segura de segredos de ambiente no servidor local (`server/.env.example`):
+    - `ANTHROPIC_API_KEY`: chave de API privada da Anthropic mantida exclusivamente no backend local e nunca exposta no aplicativo móvel.
+    - `ANTHROPIC_MODEL`: modelo de visão configurável (padrão `claude-haiku-4-5-20251001` para eficiência de custo e resposta rápida em leitura de documentos fiscais).
+    - `MOCK_AI`: flag booleana que permite alternar a qualquer momento entre modo simulado (`true`, sem custos) e modo com IA real (`false`).
+  - Análise dos pilares de segurança, conformidade e redução de custos:
+    - **Proteção da chave de IA**: chave isolada no servidor backend; o aplicativo cliente comunica-se apenas com a API intermediária autenticada via JWT.
+    - **Otimização de custos de inferência**: imagens redimensionadas no cliente para no máximo 1600 px de largura com compressão JPEG a 70% e limite máximo de 3,5 MB na função do servidor.
+    - **Proteção contra Prompt Injection**: instruções explícitas ao modelo tratando o conteúdo da imagem estritamente como dado não executável e ignorando diretivas textuais que possam estar contidas nos cupons fiscais.
+    - **Saída estruturada e validação em duas camadas**: uso obrigatório de `tools` (`register_receipt`) garantindo tipagem forte e validação pós-processamento com `normalizeReceipt`.
+- Validação estática de tipos com `pnpm run typecheck` e testes com `pnpm test`.
+
+### Problemas Encontrados e Soluções
+- **Preservação de segredos fora do repositório**: As variáveis com chaves de API foram mantidas no `.env.example` como referência comentada e no `.gitignore` como bloqueio de versionamento, assegurando que nenhuma credencial confidencial seja enviada ao GitHub.
+- **Estado**: Integração de IA configurada, segura e testada.
