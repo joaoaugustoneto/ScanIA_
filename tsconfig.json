@@ -19,6 +19,8 @@
   ],
   "exclude": [
     "node_modules",
+    "server",
+    "dist",
     "supabase/functions/**/index.ts"
   ]
 }
