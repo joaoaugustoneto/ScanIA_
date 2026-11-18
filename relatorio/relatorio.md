@@ -208,3 +208,19 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - **Isolamento de ambiente Deno vs Node.js**: No Deno puro, usam-se globais `Deno.serve` e importações `npm:`. Para manter total compatibilidade com os testes no Jest e a compilação no TypeScript sem acusar tipos ausentes, o arquivo `index.ts` foi excluído da checagem principal no `tsconfig.json` e o `server/src/scanReceipt.ts` foi construído com as mesmas regras puras e adaptadores padrão do Node/Express.
 - **Estado**: Função e backend local validados e testados.
+
+## Etapa 10 — Escanear a nota e listar os resultados
+
+### Descrição
+- Implementação da tela de escaneamento em `app/(app)/(tabs)/scan.tsx`:
+  - Três estados visuais: sem foto selecionada (botões de câmera e galeria e cartão de dicas fotográficas), com foto pré-visualizada (botões "Analisar com IA" e "Escolher outra foto") e estado ocupado (indicador de progresso com mensagens contextuais "Enviando a imagem..." e "A IA está lendo a nota...").
+  - Fluxo integrado: compressão da foto -> upload no bucket do usuário -> criação de registro `pending` -> invocação da função de IA -> tratamento de falha sem perda da foto salva -> redirecionamento para a tela de detalhes.
+- Implementação da tela principal de listagem em `app/(app)/(tabs)/index.tsx`:
+  - Componente `FlatList` com `RefreshControl` para pull-to-refresh.
+  - Exibição de `ReceiptCard` com layout contextual dependendo do status (`done`, `pending` ou `error`).
+  - Tratamento de estados assíncronos (`LoadingView`, `ErrorState` e `EmptyState` com atalho direto para a câmera).
+- Validação estática de tipos com `pnpm run typecheck` e testes automatizados com `pnpm test`.
+
+### Problemas Encontrados e Soluções
+- Nenhum erro encontrado. O fluxo assíncrono e os estados visuais foram validados e renderizam de forma limpa.
+- **Estado**: Telas de captura e listagem concluídas e testadas.
