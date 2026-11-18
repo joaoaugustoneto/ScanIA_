@@ -1,0 +1,23 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Segredos locais
+.env
+.env.*
+!.env.example
+
+# Supabase CLI
+supabase/.temp
+supabase/.branches
+
+# Server uploads e dados locais
+server/uploads/*
+!server/uploads/.gitkeep
