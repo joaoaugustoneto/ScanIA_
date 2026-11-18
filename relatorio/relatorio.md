@@ -97,3 +97,24 @@ Verificação das ferramentas necessárias para o desenvolvimento:
 ### Problemas Encontrados e Soluções
 - **Estruturação de tipos de ambiente**: O cliente do Supabase lê variáveis `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_KEY` do ambiente. Como já havíamos configurado `expo-env.d.ts` e `.env` adequadamente, a verificação com o compilador TypeScript ocorreu de forma limpa e sem erros de propriedades globais.
 - **Estado**: Testes e checagem de tipos concluídos com sucesso.
+
+## Etapa 5 — Regras de negócio e testes automatizados
+
+### Descrição
+- Implementação de funções utilitárias puras:
+  - `src/utils/money.ts`: formatação monetária padrão BRL, conversão/parsing de valores digitados com vírgula ou ponto, arredondamento seguro em centavos e formatação para campos de formulário.
+  - `src/utils/date.ts`: manipulação e cálculo de datas sem problemas de timezone (formato ISO `AAAA-MM-DD`), conversão para formato brasileiro `DD/MM/AAAA`, máscara de digitação, rótulos textuais ("Hoje", "Ontem", mês por extenso) e navegação mensal (`monthRange`, `shiftMonth`).
+  - `src/utils/summary.ts`: consolidação e agregação de recibos processados por mês e por categoria, com cálculo percentual, contagem e média ponderada em centavos inteiros.
+  - `supabase/functions/scan-receipt/parse.ts`: validação e normalização estrita dos dados extraídos pela IA (`normalizeReceipt`, tratamento de erros com `ReceiptReadError`, conversão de imagem em blocos base64 e mock fixo para testes).
+- Criação e execução dos testes unitários com Jest:
+  - `__tests__/money.test.ts`
+  - `__tests__/date.test.ts`
+  - `__tests__/summary.test.ts`
+  - `__tests__/parse.test.ts`
+- Total: 4 suítes e 36 testes automatizados executados e aprovados.
+
+### Problemas Encontrados e Soluções
+- **Erro de sintaxe no Jest com Flow types do React Native no pnpm**:
+  - *Problema*: Na primeira execução de `pnpm test`, o Jest falhou com `SyntaxError: Unexpected identifier 'ErrorHandler'` ao carregar `@react-native/js-polyfills/error-guard.js`. Esse erro ocorreu porque o `pnpm` armazena os módulos em uma estrutura aninhada com `.pnpm/`, fazendo com que a expressão regular padrão de `transformIgnorePatterns` do `jest-expo` ignorasse as dependências do React Native, deixando o código Flow sem transpilação.
+  - *Solução*: Criou-se o `babel.config.js` com o preset `babel-preset-expo` e ajustou-se a propriedade `transformIgnorePatterns` no `package.json` para suportar tanto caminhos tradicionais quanto o padrão aninhado do pnpm: `(?:\\.pnpm/.*?/node_modules/)?`. Após a correção, todos os 36 testes passaram com 100% de sucesso.
+- **Estado**: 4 suítes e 36 testes passando; typecheck sem erros.
